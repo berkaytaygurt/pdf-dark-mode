@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dark Mode PDF</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
+    <style>
+        :root { --primary: #00f2ff; --secondary: #bd00ff; --bg: #0f0f13; --card-bg: rgba(25, 25, 30, 0.95); --text: #ffffff; --gold: #ffd700; }
+        
+        body {
+            background-color: var(--bg);
+            background-image: linear-gradient(135deg, #0f0f13 0%, #1a1a2e 100%);
+            color: var(--text);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 20px; box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%; max-width: 600px; background: var(--card-bg); backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 25px; 
+            text-align: center; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); 
+            position: relative; display: flex; flex-direction: column; gap: 15px; 
+            margin-top: 120px; margin-bottom: 80px;
+            overflow: hidden; /* Çizgi dışarı taşmasın */
+        }
+
+        /* --- DÜZELTİLEN KISIM: NEON ÇİZGİ GİTTİ, PROFESYONEL ÇİZGİ GELDİ --- */
+        .container::before { 
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 0; right: 0; /* Tam genişlik */
+            height: 4px; 
+            background: var(--gold); /* Mat Altın Sarısı */
+            /* box-shadow sildik, neon parlama gitti */
+        }
+
+        .lang-switch { position: absolute; top: 20px; right: 20px; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 4px; display: flex; gap: 4px; z-index: 10; }
+        .lang-btn { background: transparent; border: none; color: #666; padding: 4px 12px; border-radius: 15px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .lang-btn.active { background: var(--primary); color: #000; box-shadow: 0 0 8px rgba(0, 242, 255, 0.3); }
+        
+        h1 { margin: 25px 0 0 0; font-size: 1.8rem; background: linear-gradient(to right, #fff, #bbb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        p.subtitle { color: #888; margin: 0; font-size: 0.9em; }
+
+        .vip-area { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 5px; gap: 5px; }
+        .vip-btn { background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa; padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
+        .vip-btn:hover { background: rgba(255,255,255,0.1); }
+        .vip-btn.active { background: linear-gradient(45deg, var(--gold), #ffaa00); color: #000; border: none; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); font-weight: bold; transform: scale(1.05); }
+        .vip-btn:active { transform: scale(0.95); }
+        .vip-benefits { font-size: 0.75rem; color: #888; max-width: 80%; line-height: 1.3; transition: all 0.3s; height: auto; opacity: 1; }
+        .vip-benefits i { color: var(--gold); margin-right: 3px; }
+        .vip-benefits.hidden { opacity: 0; height: 0; overflow: hidden; margin: 0; }
+
+        .drop-zone { border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 16px; height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; position: relative; margin-top: 5px; }
+        .drop-zone:hover, .drop-zone:active { border-color: var(--primary); background: rgba(0, 242, 255, 0.05); }
+        .drop-zone i { font-size: 30px; color: #555; margin-bottom: 5px; }
+        .file-info { display: none; margin-top: 5px; color: var(--primary); font-weight: 600; background: rgba(0, 242, 255, 0.1); padding: 4px 10px; border-radius: 8px; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size:0.8rem; }
+        #fileInput { display: none; }
+
+        #filter-grid { display: none; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; width: 100%; }
+        .filter-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px; cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden; }
+        .filter-card:hover { transform: translateY(-5px); border-color: var(--primary); box-shadow: 0 5px 15px rgba(0, 242, 255, 0.15); }
+        .filter-card:active { transform: scale(0.95); }
+        .filter-card canvas { width: 100%; height: auto; border-radius: 6px; display: block; }
+        .filter-name { margin-top: 8px; font-size: 0.85rem; font-weight: bold; color: #ccc; }
+        
+        .card-loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2; }
+        .spinner-small { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s ease-in-out infinite; }
+        #status { font-size: 0.9em; color: #666; margin-top: 15px; min-height: 1.2em; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a2e; border: 1px solid var(--primary); padding: 30px; border-radius: 24px; text-align: center; width: 85%; max-width: 320px; box-shadow: 0 0 30px rgba(0, 242, 255, 0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .modal-icon { font-size: 3rem; color: #ffd700; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5)); }
+        .modal-title { font-size: 1.2rem; color: #fff; margin-bottom: 10px; font-weight: bold; }
+        .modal-desc { font-size: 0.9rem; color: #aaa; margin-bottom: 20px; line-height: 1.4; }
+        .modal-btns { display: flex; flex-direction: column; gap: 10px; }
+        .btn-rate { background: var(--primary); color: #000; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-rate:active { transform: scale(0.95); }
+        .btn-cancel { background: transparent; border: 1px solid #444; color: #888; padding: 10px; border-radius: 12px; font-size: 0.85rem; cursor: pointer; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="lang-switch">
+        <button class="lang-btn" onclick="setLanguage('tr')" id="btn-tr">TR</button>
+        <button class="lang-btn active" onclick="setLanguage('en')" id="btn-en">EN</button>
+    </div>
+
+    <h1 id="txt-title">Dark Mode PDF</h1>
+    <p class="subtitle" id="txt-subtitle">Advanced Reading Mode</p>
+
+    <div class="vip-area">
+        <button id="vip-btn" class="vip-btn" onclick="handleVipClick()">
+            <i class="fa-solid fa-crown"></i>
+            <span id="txt-vip">VIP Modu (24s)</span>
+        </button>
+        <div id="vip-benefits" class="vip-benefits">
+            <i class="fa-solid fa-ban"></i> Reklamsız & <i class="fa-solid fa-layer-group"></i> 5 Dosya Aynı Anda
+        </div>
+    </div>
+
+    <label for="fileInput" class="drop-zone" id="dropZone">
+        <i class="fa-solid fa-cloud-arrow-up"></i>
+        <div id="dropText">Select PDF File</div>
+        <div class="file-info" id="fileInfo"></div>
+    </label>
+
+    <input type="file" id="fileInput" accept="application/pdf">
+
+    <div id="filter-grid">
+        <div class="filter-card" onclick="onFilterClick('dark')">
+            <div class="card-loader" id="loader-dark"><div class="spinner-small"></div></div>
+            <canvas id="canvas-preview-dark"></canvas>
+            <div class="filter-name" id="txt-filter-dark">⚫ Dark (Invert)</div>
+        </div>
+        <div class="filter-card" onclick="onFilterClick('soft')">
+            <div class="card-loader" id="loader-soft"><div class="spinner-small"></div></div>
+            <canvas id="canvas-preview-soft"></canvas>
+            <div class="filter-name" id="txt-filter-soft">🌑 Soft (Gray)</div>
+        </div>
+        <div class="filter-card" onclick="onFilterClick('sepia')">
+            <div class="card-loader" id="loader-sepia"><div class="spinner-small"></div></div>
+            <canvas id="canvas-preview-sepia"></canvas>
+            <div class="filter-name" id="txt-filter-sepia">📜 Sepia (Book)</div>
+        </div>
+        <div class="filter-card" onclick="onFilterClick('dimmed')">
+            <div class="card-loader" id="loader-dimmed"><div class="spinner-small"></div></div>
+            <canvas id="canvas-preview-dimmed"></canvas>
+            <div class="filter-name" id="txt-filter-dimmed">🕶️ Dimmed</div>
+        </div>
+    </div>
+
+    <div id="status"></div>
+</div>
+
+<div id="rateModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-icon"><i class="fa-solid fa-star"></i></div>
+        <div class="modal-title" id="txt-rate-title">Beğendiniz mi?</div>
+        <div class="modal-desc" id="txt-rate-desc">Uygulamamızı geliştirmemize yardımcı olmak için Play Store'da puan verir misiniz?</div>
+        <div class="modal-btns">
+            <button class="btn-rate" onclick="rateApp()" id="btn-rate-now">Puan Ver (5 Yıldız)</button>
+            <button class="btn-cancel" onclick="dontShowAgain()" id="btn-rate-never">Bir daha gösterme</button>
+            <button class="btn-cancel" style="border:none; color:#555; padding:5px" onclick="closeRateModal()">Belki sonra</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const APP_PACKAGE_NAME = "com.btayg.pdfdarkmode";
+    const RATE_URL = (window.Android || (window.Capacitor && window.Capacitor.isNative))
+        ? `market://details?id=${APP_PACKAGE_NAME}`
+        : `https://play.google.com/store/apps/details?id=${APP_PACKAGE_NAME}`;
+
+    const translations = {
+        tr: {
+            title: "Dark Mode PDF",
+            subtitle: "Gelişmiş Okuma Modu",
+            dropText: "PDF Dosyası Seç",
+            dropTextMulti: "PDF Dosyaları Seç (Çoklu)",
+            statusReady: "Bir stil seçin:",
+            statusSelect: "Lütfen dosya seçin!",
+            statusVipOnly: "Çoklu dosya seçimi sadece VIP modunda kullanılabilir!",
+            statusProcessing: "Dönüştürülüyor...",
+            statusGenerating: "Önizlemeler Hazırlanıyor...",
+            statusComplete: "Tamamlandı!",
+            statusCompleteMulti: "Tüm dosyalar indirildi.",
+            statusOpening: "Kaydediliyor...",
+            statusOpened: "Dosya açılıyor...",
+            rateTitle: "Uygulamayı Beğendiniz mi?",
+            rateDesc: "Bize destek olmak için Play Store'da 5 yıldız verirseniz çok mutlu oluruz!",
+            rateNow: "Şimdi Puan Ver",
+            rateNever: "Bir Daha Gösterme",
+            vipText: "🎥 1 Reklam İzle 👉 VIP Ol",
+            vipActive: " VIP Modu Aktif (Tadını Çıkar)",
+            vipBenefits: "Reklamsız & Sınırsız Kullanım",
+            filterDark: "⚫ Koyu (Ters)",
+            filterSoft: "🌑 Yumuşak (Gri)",
+            filterSepia: "📜 Kitap Modu (Sepia)",
+            filterDimmed: "🕶️ Loş Işık (Gece)"
+        },
+        en: {
+            title: "Dark Mode PDF",
+            subtitle: "Advanced Reading Mode",
+            dropText: "Select PDF File",
+            dropTextMulti: "Select PDF Files (Multi)",
+            statusReady: "Select a style:",
+            statusSelect: "Please select file(s) first!",
+            statusVipOnly: "Multi-file selection is for VIP only!",
+            statusProcessing: "Converting...",
+            statusGenerating: "Generating Previews...",
+            statusComplete: "Completed!",
+            statusCompleteMulti: "All files downloaded.",
+            statusOpening: "Saving...",
+            statusOpened: "Opening file...",
+            rateTitle: "Enjoying the App?",
+            rateDesc: "Would you mind rating us on the Play Store? It helps a lot!",
+            rateNow: "Rate Now",
+            rateNever: "Don't Show Again",
+            vipText: "🎥 Watch 1 Ad 👉 Get VIP",
+            vipActive: " VIP Mode Active (Enjoy)",
+            vipBenefits: "No Ads & Unlimited Access",
+            filterDark: "⚫ Dark (Invert)",
+            filterSoft: "🌑 Soft (Gray)",
+            filterSepia: "📜 Sepia (Book)",
+            filterDimmed: "🕶️ Dimmed"
+        }
+    };
+
+    let currentLang = 'en';
+    let pendingMode = null; 
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const dropText = document.getElementById('dropText');
+    const status = document.getElementById('status');
+    const icon = dropZone.querySelector('i');
+    const filterGrid = document.getElementById('filter-grid');
+    const vipBtn = document.getElementById('vip-btn');
+    const txtVip = document.getElementById('txt-vip');
+    const vipBenefits = document.getElementById('vip-benefits');
+    
+    const VIP_DURATION = 3 * 60 * 60 * 1000;
+
+    const savedLang = localStorage.getItem('appLanguage');
+    if(savedLang) { setLanguage(savedLang); } else { setLanguage('en'); }
+
+    checkVipStatus();
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) handleFiles(this.files);
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+    dropZone.addEventListener('dragover', () => dropZone.classList.add('dragover'));
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            handleFiles(e.dataTransfer.files);
+        }
+    });
+
+    async function handleFiles(files) {
+        const t = translations[currentLang];
+        dropText.style.display = 'none';
+        icon.className = 'fa-solid fa-file-pdf';
+        icon.style.color = 'var(--primary)';
+        
+        if (files.length > 1) {
+            fileInfo.innerText = `${files.length} Files Selected`;
+        } else {
+            fileInfo.innerText = files[0].name;
+        }
+        fileInfo.style.display = 'block';
+        
+        filterGrid.style.display = 'grid';
+        status.innerText = t.statusGenerating;
+
+        const file = files[0];
+        await Promise.all([
+            generatePreviewForMode(file, 'dark', 'canvas-preview-dark', 'loader-dark'),
+            generatePreviewForMode(file, 'soft', 'canvas-preview-soft', 'loader-soft'),
+            generatePreviewForMode(file, 'sepia', 'canvas-preview-sepia', 'loader-sepia'),
+            generatePreviewForMode(file, 'dimmed', 'canvas-preview-dimmed', 'loader-dimmed')
+        ]);
+
+        status.innerText = t.statusReady;
+        status.style.color = "#fff";
+    }
+
+    async function generatePreviewForMode(file, mode, canvasId, loaderId) {
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+            const newPdf = await PDFLib.PDFDocument.create();
+            const [embeddedPage] = await newPdf.embedPages([pdfDoc.getPages()[0]]);
+            const { width, height } = embeddedPage.size();
+            const newPage = newPdf.addPage([width, height]);
+
+            drawModeLayer(newPage, width, height, mode, embeddedPage);
+
+            const pdfBytes = await newPdf.save();
+            const blob = new Blob([pdfBytes], { type: "application/pdf" });
+            const previewBuffer = await blob.arrayBuffer();
+
+            await renderPageToCanvas(previewBuffer, canvasId);
+            document.getElementById(loaderId).style.display = 'none';
+        } catch (err) { console.error(err); }
+    }
+
+    function onFilterClick(mode) {
+        if (!fileInput.files.length) return;
+        const isVip = isVipActive();
+
+        if (!isVip && fileInput.files.length > 1) {
+            alert(translations[currentLang].statusVipOnly);
+            return;
+        }
+
+        if (isVip) {
+            startConversionProcess(mode);
+        } else {
+            pendingMode = mode;
+            if (window.Android && window.Android.showRewardedAd) {
+                window.Android.showRewardedAd();
+            } else {
+                startConversionProcess(mode); 
+            }
+        }
+    }
+
+    async function startConversionProcess(mode) {
+        const t = translations[currentLang];
+        const files = fileInput.files;
+        
+        status.innerText = t.statusProcessing + " (" + mode.toUpperCase() + ")";
+        status.style.color = "var(--primary)";
+
+        let lastBlob = null;
+        let lastFileName = "";
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            try {
+                const result = await processSingleFile(file, mode);
+                lastBlob = result.blob;
+                lastFileName = result.fileName;
+            } catch (err) { console.error(err); continue; }
+        }
+
+        status.style.color = "#00e676";
+        if (files.length === 1) {
+            status.innerText = t.statusOpened;
+            await saveAndOpenFile(lastBlob, lastFileName, 'open', mode);
+        } else {
+            status.innerText = t.statusCompleteMulti;
+            await saveAndOpenFile(lastBlob, lastFileName, 'open', mode);
+        }
+
+        setTimeout(() => { checkAndShowRateModal(); }, 2000);
+    }
+
+    async function processSingleFile(file, mode) {
+        const t = translations[currentLang];
+        const arrayBuffer = await file.arrayBuffer();
+        const originalPdf = await PDFLib.PDFDocument.load(arrayBuffer);
+        const newPdf = await PDFLib.PDFDocument.create();
+        const embeddedPages = await newPdf.embedPages(originalPdf.getPages());
+        
+        let count = 1;
+        const totalPages = embeddedPages.length;
+
+        for (const embeddedPage of embeddedPages) {
+             if(count % 10 === 0) await new Promise(r => setTimeout(r, 0)); 
+             status.innerText = `${t.statusProcessing} ${count}/${totalPages}`;
+             
+            const { width, height } = embeddedPage.size();
+            const newPage = newPdf.addPage([width, height]);
+
+            drawModeLayer(newPage, width, height, mode, embeddedPage);
+            count++;
+        }
+
+        const pdfBytes = await newPdf.save();
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        await saveAndOpenFile(blob, file.name, 'save', mode); 
+        return { blob: blob, fileName: file.name };
+    }
+
+    function drawModeLayer(newPage, width, height, mode, embeddedPage) {
+        if (mode === 'dark' || mode === 'soft') {
+            newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(1, 1, 1) });
+        } else {
+            newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(1, 1, 1) });
+        }
+        newPage.drawPage(embeddedPage, { x: 0, y: 0, width, height });
+
+        if (mode === 'dark') {
+            newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(1, 1, 1), blendMode: PDFLib.BlendMode.Difference });
+        } else if (mode === 'soft') {
+            newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(1, 1, 1), blendMode: PDFLib.BlendMode.Difference });
+            newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(0, 0, 0), opacity: 0.15 });
+        } else if (mode === 'sepia') {
+            newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(0.82, 0.76, 0.60), blendMode: PDFLib.BlendMode.Multiply });
+        } else if (mode === 'dimmed') {
+            newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(0, 0, 0), opacity: 0.5 });
+        }
+    }
+
+    async function saveAndOpenFile(blob, originalName, actionType, mode) {
+        const cleanName = originalName.replace(/\.pdf$/i, ''); 
+        const appPrefix = "Dark_Mode_PDF"; 
+        const modeSuffix = mode.charAt(0).toUpperCase() + mode.slice(1);
+        const fileName = `${appPrefix}_${cleanName}_${modeSuffix}.pdf`;
+
+        if (window.Capacitor && window.Capacitor.Plugins.Filesystem) {
+            try {
+                if (actionType === 'save' || actionType === 'open') {
+                    const base64Data = await blobToBase64(blob);
+                    try {
+                        await window.Capacitor.Plugins.Filesystem.writeFile({
+                            path: "Download/" + fileName, data: base64Data, directory: 'EXTERNAL_STORAGE', recursive: true
+                        });
+                    } catch(err) {
+                        await window.Capacitor.Plugins.Filesystem.writeFile({ path: fileName, data: base64Data, directory: 'DOCUMENTS' });
+                    }
+                }
+                if (actionType === 'open' && window.Capacitor.Plugins.FileOpener) {
+                    try {
+                        const uri = await window.Capacitor.Plugins.Filesystem.getUri({ path: "Download/" + fileName, directory: 'EXTERNAL_STORAGE'});
+                        await window.Capacitor.Plugins.FileOpener.openFile({ path: uri.uri });
+                    } catch(e) {
+                        const uri = await window.Capacitor.Plugins.Filesystem.getUri({ path: fileName, directory: 'DOCUMENTS'});
+                        await window.Capacitor.Plugins.FileOpener.openFile({ path: uri.uri });
+                    }
+                }
+            } catch (err) { console.error("Save error:", err); }
+        } else {
+            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = fileName; link.click();
+        }
+    }
+
+    function blobToBase64(blob) { return new Promise((r, j) => { const reader = new FileReader(); reader.onloadend = () => r(reader.result.replace("data:application/pdf;base64,", "")); reader.onerror = j; reader.readAsDataURL(blob); }); }
+    function onRewardedAdCompleted(success) {
+        if (success) {
+            activateVipMode();
+            if (pendingMode) { startConversionProcess(pendingMode); pendingMode = null; }
+        } else { alert(currentLang === 'tr' ? "İşlemi tamamlamak için reklamı izlemelisiniz." : "Watch the ad to convert."); }
+    }
+    async function renderPageToCanvas(buffer, canvasId) {
+        try {
+            const loadingTask = pdfjsLib.getDocument(buffer);
+            const pdf = await loadingTask.promise;
+            const page = await pdf.getPage(1);
+            const canvas = document.getElementById(canvasId);
+            const context = canvas.getContext('2d');
+            const desiredWidth = canvas.parentElement.clientWidth;
+            const viewport = page.getViewport({ scale: 1.0 });
+            const scale = (desiredWidth / viewport.width);
+            const scaledViewport = page.getViewport({ scale: scale });
+            canvas.height = scaledViewport.height;
+            canvas.width = scaledViewport.width;
+            await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
+        } catch(e) { console.log(e); }
+    }
+
+    function handleVipClick() {
+        if (isVipActive()) { alert(currentLang === 'tr' ? "Zaten VIP Modundasınız!" : "Already VIP!"); return; }
+        if (window.Android && window.Android.showRewardedAd) { window.Android.showRewardedAd(); } else { activateVipMode(); }
+    }
+    function activateVipMode() {
+        const now = new Date().getTime();
+        localStorage.setItem('vipExpiry', now + VIP_DURATION);
+        checkVipStatus();
+        alert(currentLang === 'tr' ? "VIP Modu Aktif!" : "VIP Mode Activated!");
+    }
+    function isVipActive() {
+        const vipExpiry = localStorage.getItem('vipExpiry');
+        if (!vipExpiry) return false;
+        return new Date().getTime() < parseInt(vipExpiry);
+    }
+    function checkVipStatus() {
+        const t = translations[currentLang];
+        const isVip = isVipActive();
+        if (window.Android) {
+            if (isVip) { if(window.Android.hideBannerAds) window.Android.hideBannerAds(); }
+            else { if(window.Android.showBannerAds) window.Android.showBannerAds(); }
+        }
+        if (isVip) {
+            vipBtn.classList.add('active');
+            txtVip.innerText = t.vipActive;
+            vipBenefits.classList.add('hidden');
+            fileInput.setAttribute('multiple', 'multiple');
+            dropText.innerText = t.dropTextMulti;
+        } else {
+            vipBtn.classList.remove('active');
+            txtVip.innerText = t.vipText;
+            vipBenefits.classList.remove('hidden');
+            vipBenefits.innerHTML = t.vipBenefits;
+            fileInput.removeAttribute('multiple');
+            dropText.innerText = t.dropText;
+        }
+    }
+
+    // DÜZELTME: Bu fonksiyonun içine "status" güncellemesi eklendi
+    function setLanguage(lang) {
+        currentLang = lang;
+        localStorage.setItem('appLanguage', lang);
+        document.getElementById('btn-tr').classList.toggle('active', lang === 'tr');
+        document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+        const t = translations[lang];
+        document.getElementById('txt-title').innerText = t.title;
+        document.getElementById('txt-subtitle').innerText = t.subtitle;
+        document.getElementById('txt-rate-title').innerText = t.rateTitle;
+        document.getElementById('txt-rate-desc').innerText = t.rateDesc;
+        document.getElementById('btn-rate-now').innerText = t.rateNow;
+        document.getElementById('btn-rate-never').innerText = t.rateNever;
+        
+        if(document.getElementById('txt-filter-dark')) {
+            document.getElementById('txt-filter-dark').innerText = t.filterDark;
+            document.getElementById('txt-filter-soft').innerText = t.filterSoft;
+            document.getElementById('txt-filter-sepia').innerText = t.filterSepia;
+            document.getElementById('txt-filter-dimmed').innerText = t.filterDimmed;
+        }
+
+        // --- YENİ EKLENEN KISIM ---
+        // Eğer dosya seçiliyse ve ızgara açıksa, o anki durumu da dile göre güncelle
+        const filterGrid = document.getElementById('filter-grid');
+        if (filterGrid.style.display === 'grid' && status.innerText.includes(':')) {
+             status.innerText = t.statusReady;
+        }
+
+        checkVipStatus();
+    }
+    
+    function checkAndShowRateModal() { if (!localStorage.getItem('dontShowRate')) document.getElementById('rateModal').style.display = 'flex'; }
+    function closeRateModal() { document.getElementById('rateModal').style.display = 'none'; }
+    function dontShowAgain() { localStorage.setItem('dontShowRate', 'true'); closeRateModal(); }
+    function rateApp() { localStorage.setItem('dontShowRate', 'true'); closeRateModal(); if (window.Android && window.Android.requestAppReview) window.Android.requestAppReview(); else window.location.href = RATE_URL; }
+</script>
+</body>
+</html>
