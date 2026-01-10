@@ -2,11 +2,13 @@ package com.btayg.pdfdarkmode;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Base64;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -38,6 +40,8 @@ import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.google.android.play.core.review.ReviewManager;
 import com.google.android.play.core.review.ReviewManagerFactory;
+import java.util.List;
+import java.util.ArrayList;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -255,6 +259,57 @@ public class MainActivity extends BridgeActivity {
 
     // ============ YENİ METODLAR: PDF KAYDET VE AÇ ============
 
+
+    // YENİ METOD - savePdfOnly metodunun üstüne ekle
+    @JavascriptInterface
+    public void savePdfBytes(final String bytesArrayString, final String fileName) {
+        runOnUiThread(() -> {
+            try {
+                // Yeni değişken kullan (final olanı değiştirme)
+                String trimmedString = bytesArrayString.trim();
+
+                if (!trimmedString.startsWith("[") || !trimmedString.endsWith("]")) {
+                    throw new Exception("Invalid array format");
+                }
+
+                String cleanStr = trimmedString.substring(1, trimmedString.length() - 1);
+                String[] byteStrings = cleanStr.split(",");
+
+                byte[] pdfBytes = new byte[byteStrings.length];
+                for (int i = 0; i < byteStrings.length; i++) {
+                    String trimmed = byteStrings[i].trim();
+                    int value = Integer.parseInt(trimmed);
+                    pdfBytes[i] = (byte) value;
+                }
+
+                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (!downloadsDir.exists()) {
+                    downloadsDir.mkdirs();
+                }
+
+                File pdfFile = new File(downloadsDir, fileName);
+
+                FileOutputStream fos = new FileOutputStream(pdfFile);
+                fos.write(pdfBytes);
+                fos.close();
+
+                MediaScannerConnection.scanFile(
+                        MainActivity.this,
+                        new String[]{pdfFile.getAbsolutePath()},
+                        new String[]{"application/pdf"},
+                        null
+                );
+
+                Log.d("PDFSave", "Success: " + pdfFile.getAbsolutePath());
+
+            } catch (Exception e) {
+                Log.e("PDFSave", "Error: " + e.getMessage());
+                e.printStackTrace();
+                Toast.makeText(MainActivity.this, "Save failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
     /**
      * PDF'i sadece kaydeder (açmaz)
      */
@@ -281,6 +336,66 @@ public class MainActivity extends BridgeActivity {
     /**
      * PDF'i kaydeder ve otomatik olarak açar
      */
+    private FileOutputStream currentFileStream = null;
+    private String currentFileName = null;
+
+    @JavascriptInterface
+    public void saveFileChunk(final String fileName, final String base64Chunk, final boolean isFirst) {
+        runOnUiThread(() -> {
+            try {
+                File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (!downloadsDir.exists()) {
+                    downloadsDir.mkdirs();
+                }
+
+                // İlk chunk: Yeni dosya aç
+                if (isFirst) {
+                    if (currentFileStream != null) {
+                        currentFileStream.close();
+                    }
+                    File pdfFile = new File(downloadsDir, fileName);
+                    currentFileStream = new FileOutputStream(pdfFile);
+                    currentFileName = fileName;
+                }
+
+                // Chunk'ı decode et ve yaz
+                byte[] chunkBytes = Base64.decode(base64Chunk, Base64.DEFAULT);
+                if (currentFileStream != null) {
+                    currentFileStream.write(chunkBytes);
+                }
+
+            } catch (Exception e) {
+                Log.e("PDFChunk", "Error: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @JavascriptInterface
+    public void finalizeChunkedFile() {
+        runOnUiThread(() -> {
+            try {
+                if (currentFileStream != null) {
+                    currentFileStream.close();
+                    currentFileStream = null;
+
+                    // Media scanner'a bildir
+                    if (currentFileName != null) {
+                        File downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                        File pdfFile = new File(downloadsDir, currentFileName);
+                        MediaScannerConnection.scanFile(
+                                MainActivity.this,
+                                new String[]{pdfFile.getAbsolutePath()},
+                                new String[]{"application/pdf"},
+                                null
+                        );
+                    }
+                }
+            } catch (Exception e) {
+                Log.e("PDFChunk", "Finalize error: " + e.getMessage());
+            }
+        });
+    }
     @JavascriptInterface
     public void savePdfAndOpen(String base64Data, String fileName) {
         new Thread(() -> {
