@@ -1,1 +1,18 @@
-# pdf-dark-mode
+# PDF Dark Mode 🌙📄
+
+**PDF Dark Mode**, PDF dosyalarını göz yormayan **dark mode** görünümünde okumanı sağlayan bir uygulamadır.  
+Özellikle gece okuma yapan kullanıcılar için tasarlanmıştır.
+
+## 🚀 Özellikler
+- PDF dosyalarını dark mode olarak görüntüleme
+- Göz yorgunluğunu azaltan renk dönüşümü
+- Hızlı ve hafif kullanım
+- Mobil uyumlu arayüz
+- Reklamsız / sade deneyim
+
+## 🛠 Kullanılan Teknolojiler
+- Android (WebView tabanlı)
+- HTML / CSS / JavaScript
+- Capacitor
+
+## 📂 Proje Yapısı
