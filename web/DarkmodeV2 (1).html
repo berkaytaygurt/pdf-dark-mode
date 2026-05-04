@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dark Mode PDF | Read Documents Without Eye Strain</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Convert any PDF to dark mode instantly. Protect your eyes, read comfortably at night with our free online dark mode PDF converter.">
+    <meta name="keywords" content="dark mode pdf, read pdf dark mode, invert pdf colors, night mode pdf">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+
+    <style>
+        :root { --primary: #00f2ff; --secondary: #bd00ff; --bg: #0f0f13; --card-bg: rgba(25, 25, 30, 0.95); --text: #ffffff; --gold: #ffd700; }
+        
+        body {
+            background-color: var(--bg);
+            background-image: linear-gradient(135deg, #0f0f13 0%, #1a1a2e 100%);
+            color: var(--text);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh; margin: 0; display: flex; flex-direction: column;
+        }
+
+        /* --- HEADER --- */
+        .site-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 30px; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05); position: fixed; width: 100%; top: 0; z-index: 100; box-sizing: border-box;
+        }
+        .logo { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .logo i { color: var(--primary); }
+
+        .lang-switch { display: flex; gap: 4px; background: rgba(255, 255, 255, 0.05); padding: 4px; border-radius: 20px;}
+        .lang-btn { background: transparent; border: none; color: #666; padding: 4px 12px; border-radius: 15px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .lang-btn.active { background: var(--primary); color: #000; box-shadow: 0 0 8px rgba(0, 242, 255, 0.3); }
+
+        /* --- LAYOUT (SIDEBARS & MAIN) - BÜYÜTÜLMÜŞ REKLAM ALANLARI --- */
+        .layout-wrapper { 
+            display: flex; justify-content: center; gap: 30px; max-width: 1350px; 
+            margin: 100px auto 40px auto; padding: 0 15px; width: 100%; box-sizing: border-box; flex: 1;
+        }
+        
+        .sidebar {
+            width: 300px; background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.1); border-radius: 12px;
+            display: none; flex-direction: column; align-items: center; justify-content: center; color: #444; font-size: 0.8rem; text-align: center; padding: 10px;
+        }
+        @media(min-width: 1200px) { .sidebar { display: flex; } } 
+
+        .ad-placeholder { border: 1px solid #333; width: 100%; height: 600px; display: flex; align-items: center; justify-content: center; background: #111; border-radius: 8px;}
+
+        /* --- APP CONTAINER --- */
+        .container {
+            width: 100%; max-width: 600px; background: var(--card-bg); backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 25px; 
+            text-align: center; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); position: relative; display: flex; flex-direction: column; gap: 15px; overflow: hidden;
+        }
+        .container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--gold); }
+        
+        h1 { margin: 10px 0 0 0; font-size: 1.8rem; background: linear-gradient(to right, #fff, #bbb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        p.subtitle { color: #888; margin: 0; font-size: 0.9em; }
+
+        /* --- APP ELEMENTS --- */
+        .vip-area { display: flex; flex-direction: column; align-items: center; margin-bottom: 5px; gap: 5px; }
+        .vip-btn { background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa; padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
+        .vip-btn:hover { background: rgba(255,255,255,0.1); }
+        .vip-btn.active { background: linear-gradient(45deg, var(--gold), #ffaa00); color: #000; border: none; font-weight: bold; transform: scale(1.05); }
+        .vip-benefits { font-size: 0.75rem; color: #888; line-height: 1.3; transition: all 0.3s; height: auto; opacity: 1; }
+        .vip-benefits.hidden { opacity: 0; height: 0; overflow: hidden; margin: 0; }
+
+        .drop-zone { border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 16px; height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; margin-top: 5px; }
+        .drop-zone:hover, .drop-zone.dragover { border-color: var(--primary); background: rgba(0, 242, 255, 0.05); }
+        .drop-zone i { font-size: 30px; color: #555; margin-bottom: 5px; }
+        .file-info { display: none; margin-top: 5px; color: var(--primary); font-weight: 600; font-size:0.8rem; }
+        #fileInput { display: none; }
+
+        #filter-grid { display: none; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; width: 100%; }
+        .filter-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px; cursor: pointer; transition: all 0.3s; position: relative; }
+        .filter-card:hover { transform: translateY(-5px); border-color: var(--primary); }
+        .filter-card canvas { width: 100%; height: auto; border-radius: 6px; display: block; }
+        .filter-name { margin-top: 8px; font-size: 0.85rem; font-weight: bold; color: #ccc; }
+        .card-loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2; border-radius:12px;}
+        .spinner-small { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s linear infinite; }
+        
+        #status { font-size: 0.9em; color: #666; margin-top: 15px; min-height: 1.2em; font-weight: bold;}
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- MODALS (Tam Ekran Reklam & Değerlendirme) --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: #1a1a2e; border: 1px solid #444; padding: 30px; border-radius: 24px; text-align: center; width: 85%; max-width: 400px; box-shadow: 0 0 30px rgba(0, 0, 0, 0.8); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .modal-title { font-size: 1.5rem; color: #fff; margin-bottom: 10px; font-weight: bold; }
+        .btn-action { background: var(--gold); color: #000; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; font-size: 1rem;}
+        .btn-action:active { transform: scale(0.95); }
+        
+        /* Tam Ekran Reklam İçeriği */
+        .ad-video-mockup { height: 200px; background: #000; border: 1px solid #333; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; color: #666; border-radius: 12px;}
+        #ad-timer { font-size: 2rem; color: #fff; font-weight: bold; margin-bottom: 15px; }
+
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* --- SEO CONTENT AREA --- */
+        .seo-section { max-width: 800px; margin: 0 auto 60px auto; padding: 20px; color: #aaa; line-height: 1.6; }
+        .seo-section h2 { color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 40px;}
+        .seo-section h3 { color: #eee; margin-top: 25px; }
+        .seo-section p { font-size: 0.95rem; }
+
+        /* --- FOOTER --- */
+        .site-footer { text-align: center; padding: 20px; background: rgba(0,0,0,0.8); color: #666; font-size: 0.8rem; border-top: 1px solid #222; margin-top: auto;}
+        .site-footer a { color: var(--primary); text-decoration: none; margin: 0 10px; }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+    <div class="logo"><i class="fa-solid fa-moon"></i> Dark Mode PDF</div>
+    <div class="lang-switch">
+        <button class="lang-btn" onclick="setLanguage('tr')" id="btn-tr">TR</button>
+        <button class="lang-btn active" onclick="setLanguage('en')" id="btn-en">EN</button>
+    </div>
+</header>
+
+<!-- MAIN LAYOUT -->
+<div class="layout-wrapper">
+    <!-- LEFT SIDEBAR (Büyütüldü 300x600) -->
+    <aside class="sidebar sidebar-left">
+        <p>Advertisement</p>
+        <div class="ad-placeholder">AdSense<br>300x600</div>
+    </aside>
+
+    <!-- APP CONTAINER -->
+    <div class="container">
+        <h1 id="txt-title">Dark Mode PDF</h1>
+        <p class="subtitle" id="txt-subtitle">Advanced Reading Mode</p>
+
+        <div class="vip-area">
+            <button id="vip-btn" class="vip-btn" onclick="handleVipClick()">
+                <i class="fa-solid fa-crown"></i>
+                <span id="txt-vip">VIP Modu (24s)</span>
+            </button>
+            <div id="vip-benefits" class="vip-benefits">
+                <i class="fa-solid fa-ban"></i> Reklamsız & <i class="fa-solid fa-layer-group"></i> 5 Dosya Aynı Anda
+            </div>
+        </div>
+
+        <label for="fileInput" class="drop-zone" id="dropZone">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <div id="dropText">Select PDF File</div>
+            <div class="file-info" id="fileInfo"></div>
+        </label>
+        <input type="file" id="fileInput" accept="application/pdf">
+
+        <div id="filter-grid">
+            <div class="filter-card" onclick="onFilterClick('dark')">
+                <div class="card-loader" id="loader-dark"><div class="spinner-small"></div></div>
+                <canvas id="canvas-preview-dark"></canvas>
+                <div class="filter-name" id="txt-filter-dark">⚫ Dark (Invert)</div>
+            </div>
+            <div class="filter-card" onclick="onFilterClick('soft')">
+                <div class="card-loader" id="loader-soft"><div class="spinner-small"></div></div>
+                <canvas id="canvas-preview-soft"></canvas>
+                <div class="filter-name" id="txt-filter-soft">🌑 Soft (Gray)</div>
+            </div>
+            <div class="filter-card" onclick="onFilterClick('sepia')">
+                <div class="card-loader" id="loader-sepia"><div class="spinner-small"></div></div>
+                <canvas id="canvas-preview-sepia"></canvas>
+                <div class="filter-name" id="txt-filter-sepia">📜 Sepia (Book)</div>
+            </div>
+            <div class="filter-card" onclick="onFilterClick('dimmed')">
+                <div class="card-loader" id="loader-dimmed"><div class="spinner-small"></div></div>
+                <canvas id="canvas-preview-dimmed"></canvas>
+                <div class="filter-name" id="txt-filter-dimmed">🕶️ Dimmed</div>
+            </div>
+        </div>
+        <div id="status"></div>
+    </div>
+
+    <!-- RIGHT SIDEBAR (Büyütüldü 300x600) -->
+    <aside class="sidebar sidebar-right">
+        <p>Advertisement</p>
+        <div class="ad-placeholder">AdSense<br>300x600</div>
+    </aside>
+</div>
+
+<!-- TAM EKRAN REKLAM MODALI (Simülasyon) -->
+<div id="rewardAdModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-title" style="color: var(--gold);" id="txt-ad-title">Sponsorlu Reklam</div>
+        <div class="ad-video-mockup">
+            <i class="fa-solid fa-play" style="font-size: 2rem; color: #333;"></i>
+            <span style="margin-left: 10px;" id="txt-ad-playing">Reklam Oynatılıyor...</span>
+        </div>
+        <div id="ad-timer">3</div>
+        <button id="btn-close-ad" class="btn-action" style="display: none;" onclick="closeAdAndReward()">Ödülü Al & Kapat</button>
+    </div>
+</div>
+
+<!-- SEO ARTICLES SECTION -->
+<section class="seo-section" id="seo-content">
+    <h2 id="seo-h1">Why Use Dark Mode for PDFs?</h2>
+    <p id="seo-p1">Reading PDF documents on bright screens can cause severe eye strain, especially at night. Most PDF readers do not offer a native dark mode. Our free online tool inverts the colors of your PDF files, turning glaring white backgrounds into soothing dark colors without modifying the original text.</p>
+    
+    <h3 id="seo-h2">Features of Our PDF Inverter</h3>
+    <p id="seo-p2">1. <b>Privacy First:</b> All processing is done locally in your browser. We do not upload your sensitive documents to our servers.<br>
+    2. <b>Multiple Filters:</b> Choose between Pure Dark, Soft Gray, or Sepia based on your lighting environment.<br>
+    3. <b>Multi-File Support:</b> Convert multiple files simultaneously to save time.</p>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+    <div>&copy; 2026 Dark Mode PDF. All rights reserved.</div>
+    <div style="margin-top: 10px;">
+        <a href="#" id="link-privacy">Privacy Policy</a> | 
+        <a href="#" id="link-terms">Terms of Service</a> |
+        <a href="#" id="link-contact">Contact</a>
+    </div>
+</footer>
+
+<script>
+    const translations = {
+        tr: {
+            title: "Dark Mode PDF", subtitle: "Gelişmiş Okuma Modu", dropText: "PDF Dosyası Sürükle veya Seç", dropTextMulti: "PDF Dosyaları Seç (Çoklu)",
+            statusReady: "Harika! Şimdi bir stil seçin:", statusSelect: "Lütfen dosya seçin!", statusVipOnly: "Çoklu dosya seçimi VIP modunda kullanılabilir!",
+            statusProcessing: "Dönüştürülüyor...", statusGenerating: "Önizlemeler Hazırlanıyor...", statusComplete: "İşlem Tamamlandı!",
+            statusOpening: "Kaydediliyor...", statusOpened: "İndirildi!",
+            vipText: "🎥 1 Reklam İzle 👉 VIP Ol", vipActive: "VIP Modu Aktif", vipBenefits: "Reklamsız & Sınırsız Kullanım",
+            filterDark: "⚫ Koyu (Ters)", filterSoft: "🌑 Yumuşak (Gri)", filterSepia: "📜 Kitap Modu (Sepia)", filterDimmed: "🕶️ Loş Işık",
+            // Reklam Metinleri
+            adTitle: "Sponsorlu Reklam", adPlaying: "Reklam Oynatılıyor...", adRewardBtn: "Ödülü Al & Kapat",
+            // SEO Metinleri
+            seoH1: "PDF'ler İçin Neden Karanlık Mod Kullanmalısınız?",
+            seoP1: "Parlak ekranlarda uzun süre PDF okumak ciddi göz yorgunluğuna sebep olur. Aracımız, orijinal metinleri bozmadan PDF arka planlarınızı göz yormayan koyu tonlara çevirir. Tamamen ücretsizdir.",
+            seoH2: "Özelliklerimiz",
+            seoP2: "1. <b>Tam Gizlilik:</b> Dosyalarınız asla sunucularımıza yüklenmez, her şey tarayıcınızda gerçekleşir.<br>2. <b>Filtre Seçenekleri:</b> Saf Siyah, Yumuşak Gri veya Sepia modlarını seçebilirsiniz.<br>3. <b>Çoklu İşlem:</b> Aynı anda birden fazla PDF belgesini dönüştürün.",
+            linkPrivacy: "Gizlilik Politikası", linkTerms: "Kullanım Koşulları", linkContact: "İletişim"
+        },
+        en: {
+            title: "Dark Mode PDF", subtitle: "Advanced Reading Mode", dropText: "Drop or Select PDF File", dropTextMulti: "Select PDF Files (Multi)",
+            statusReady: "Great! Select a style:", statusSelect: "Please select file(s) first!", statusVipOnly: "Multi-file is for VIP only!",
+            statusProcessing: "Converting...", statusGenerating: "Generating Previews...", statusComplete: "Completed!",
+            statusOpening: "Saving...", statusOpened: "Downloaded!",
+            vipText: "🎥 Watch 1 Ad 👉 Get VIP", vipActive: "VIP Mode Active", vipBenefits: "No Ads & Unlimited Access",
+            filterDark: "⚫ Dark (Invert)", filterSoft: "🌑 Soft (Gray)", filterSepia: "📜 Sepia (Book)", filterDimmed: "🕶️ Dimmed",
+            // Ad Texts
+            adTitle: "Sponsored Ad", adPlaying: "Ad is playing...", adRewardBtn: "Claim Reward & Close",
+            // SEO Texts
+            seoH1: "Why Use Dark Mode for PDFs?",
+            seoP1: "Reading PDF documents on bright screens can cause severe eye strain, especially at night. Our free online tool inverts the colors of your PDF files, turning glaring white backgrounds into soothing dark colors without modifying the original text.",
+            seoH2: "Features of Our PDF Inverter",
+            seoP2: "1. <b>Privacy First:</b> All processing is done locally in your browser. We do not upload your sensitive documents to our servers.<br>2. <b>Multiple Filters:</b> Choose between Pure Dark, Soft Gray, or Sepia based on your lighting environment.<br>3. <b>Multi-File Support:</b> Convert multiple files simultaneously to save time.",
+            linkPrivacy: "Privacy Policy", linkTerms: "Terms of Service", linkContact: "Contact"
+        }
+    };
+
+    let currentLang = 'en';
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const dropText = document.getElementById('dropText');
+    const status = document.getElementById('status');
+    const filterGrid = document.getElementById('filter-grid');
+    const VIP_DURATION = 3 * 60 * 60 * 1000;
+
+    const savedLang = localStorage.getItem('appLanguage');
+    setLanguage(savedLang ? savedLang : 'en');
+    checkVipStatus();
+
+    // Drag & Drop
+    fileInput.addEventListener('change', function() { if (this.files.length > 0) handleFiles(this.files); });
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => { dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false); });
+    dropZone.addEventListener('dragover', () => dropZone.classList.add('dragover'));
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => { dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; handleFiles(e.dataTransfer.files); } });
+
+    async function handleFiles(files) {
+        const t = translations[currentLang];
+        dropText.style.display = 'none';
+        dropZone.querySelector('i').className = 'fa-solid fa-file-pdf';
+        dropZone.querySelector('i').style.color = 'var(--primary)';
+        
+        fileInfo.innerText = files.length > 1 ? `${files.length} Files Selected` : files[0].name;
+        fileInfo.style.display = 'block';
+        filterGrid.style.display = 'grid';
+        status.innerText = t.statusGenerating;
+        status.style.color = "#aaa";
+
+        ['dark','soft','sepia','dimmed'].forEach(m => document.getElementById(`loader-${m}`).style.display = 'flex');
+
+        await Promise.all([
+            generatePreviewForMode(files[0], 'dark', 'canvas-preview-dark', 'loader-dark'),
+            generatePreviewForMode(files[0], 'soft', 'canvas-preview-soft', 'loader-soft'),
+            generatePreviewForMode(files[0], 'sepia', 'canvas-preview-sepia', 'loader-sepia'),
+            generatePreviewForMode(files[0], 'dimmed', 'canvas-preview-dimmed', 'loader-dimmed')
+        ]);
+        status.innerText = t.statusReady; status.style.color = "#00f2ff";
+    }
+
+    async function startConversionProcess(mode) {
+        const t = translations[currentLang];
+        const files = fileInput.files;
+        status.innerText = `${t.statusProcessing} (${mode.toUpperCase()})`;
+        status.style.color = "var(--gold)";
+
+        for (let i = 0; i < files.length; i++) {
+            status.innerText = `${t.statusProcessing} (${i+1}/${files.length})`;
+            try { await processSingleFile(files[i], mode, 'save'); } catch (err) { console.error("Hata:", err); }
+        }
+
+        status.style.color = "#00e676";
+        status.innerText = t.statusComplete;
+    }
+
+    async function processSingleFile(file, mode, action) {
+        const arrayBuffer = await file.arrayBuffer();
+        const originalPdf = await PDFLib.PDFDocument.load(arrayBuffer);
+        const newPdf = await PDFLib.PDFDocument.create();
+        const embeddedPages = await newPdf.embedPages(originalPdf.getPages());
+
+        for (const embeddedPage of embeddedPages) {
+            const { width, height } = embeddedPage.size();
+            const newPage = newPdf.addPage([width, height]);
+            drawModeLayer(newPage, width, height, mode, embeddedPage);
+        }
+
+        const pdfBytes = await newPdf.save();
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        await saveAndOpenFile(blob, file.name, action, mode);
+    }
+
+    async function generatePreviewForMode(file, mode, canvasId, loaderId) {
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+            const newPdf = await PDFLib.PDFDocument.create();
+            const [embeddedPage] = await newPdf.embedPages([pdfDoc.getPages()[0]]);
+            const { width, height } = embeddedPage.size();
+            const newPage = newPdf.addPage([width, height]);
+
+            drawModeLayer(newPage, width, height, mode, embeddedPage);
+            const pdfBytes = await newPdf.save();
+            const blob = new Blob([pdfBytes], { type: "application/pdf" });
+            const previewBuffer = await blob.arrayBuffer();
+
+            await renderPageToCanvas(previewBuffer, canvasId);
+            document.getElementById(loaderId).style.display = 'none';
+        } catch (err) { console.error(err); }
+    }
+
+    function drawModeLayer(newPage, width, height, mode, embeddedPage) {
+        newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(1, 1, 1) });
+        newPage.drawPage(embeddedPage, { x: 0, y: 0, width, height });
+
+        if (mode === 'dark') { newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(1, 1, 1), blendMode: PDFLib.BlendMode.Difference }); } 
+        else if (mode === 'soft') { newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(1, 1, 1), blendMode: PDFLib.BlendMode.Difference }); newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(0, 0, 0), opacity: 0.15 }); } 
+        else if (mode === 'sepia') { newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(0.82, 0.76, 0.60), blendMode: PDFLib.BlendMode.Multiply }); } 
+        else if (mode === 'dimmed') { newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(0, 0, 0), opacity: 0.5 }); }
+    }
+
+    async function saveAndOpenFile(blob, originalName, actionType, mode) {
+        const cleanName = originalName.replace(/\.pdf$/i, ''); 
+        const modeSuffix = mode.charAt(0).toUpperCase() + mode.slice(1);
+        const fileName = `Dark_Mode_PDF_${cleanName}_${modeSuffix}.pdf`;
+
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = fileName; link.click();
+    }
+
+    async function renderPageToCanvas(buffer, canvasId) {
+        const loadingTask = pdfjsLib.getDocument(buffer);
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+        const canvas = document.getElementById(canvasId);
+        const context = canvas.getContext('2d');
+        const desiredWidth = canvas.parentElement.clientWidth;
+        const scale = (desiredWidth / page.getViewport({ scale: 1.0 }).width);
+        const scaledViewport = page.getViewport({ scale: scale });
+        canvas.height = scaledViewport.height; canvas.width = scaledViewport.width;
+        await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
+    }
+
+    function onFilterClick(mode) {
+        if (!fileInput.files.length) return;
+        if (!isVipActive() && fileInput.files.length > 1) { alert(translations[currentLang].statusVipOnly); return; }
+        startConversionProcess(mode);
+    }
+
+    // --- TAM EKRAN VIP REKLAM SİMÜLASYONU ---
+    let adInterval;
+    function handleVipClick() {
+        if (isVipActive()) { alert(currentLang === 'tr' ? "Zaten VIP Modundasınız!" : "Already VIP!"); return; }
+        gosterTamEkranReklam();
+    }
+
+    function gosterTamEkranReklam() {
+        const adModal = document.getElementById('rewardAdModal');
+        const timerEl = document.getElementById('ad-timer');
+        const closeBtn = document.getElementById('btn-close-ad');
+        
+        adModal.style.display = 'flex';
+        closeBtn.style.display = 'none';
+        
+        let timeLeft = 3;
+        timerEl.innerText = timeLeft;
+        timerEl.style.display = 'block';
+
+        adInterval = setInterval(() => {
+            timeLeft--;
+            timerEl.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(adInterval);
+                timerEl.style.display = 'none';
+                closeBtn.style.display = 'inline-block';
+            }
+        }, 1000);
+    }
+
+    function closeAdAndReward() {
+        document.getElementById('rewardAdModal').style.display = 'none';
+        const now = new Date().getTime(); localStorage.setItem('vipExpiry', now + VIP_DURATION); checkVipStatus();
+    }
+
+    function isVipActive() {
+        const vipExpiry = localStorage.getItem('vipExpiry');
+        return vipExpiry ? new Date().getTime() < parseInt(vipExpiry) : false;
+    }
+
+    function checkVipStatus() {
+        const t = translations[currentLang];
+        const vipBtn = document.getElementById('vip-btn');
+        if (isVipActive()) {
+            vipBtn.classList.add('active'); document.getElementById('txt-vip').innerText = t.vipActive;
+            document.getElementById('vip-benefits').classList.add('hidden');
+            fileInput.setAttribute('multiple', 'multiple'); document.getElementById('dropText').innerText = t.dropTextMulti;
+        } else {
+            vipBtn.classList.remove('active'); document.getElementById('txt-vip').innerText = t.vipText;
+            document.getElementById('vip-benefits').classList.remove('hidden'); document.getElementById('vip-benefits').innerHTML = t.vipBenefits;
+            fileInput.removeAttribute('multiple'); document.getElementById('dropText').innerText = t.dropText;
+        }
+    }
+
+    function setLanguage(lang) {
+        currentLang = lang; localStorage.setItem('appLanguage', lang);
+        document.getElementById('btn-tr').classList.toggle('active', lang === 'tr'); document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+        const t = translations[lang];
+        
+        document.getElementById('txt-title').innerText = t.title; document.getElementById('txt-subtitle').innerText = t.subtitle;
+        document.getElementById('seo-h1').innerText = t.seoH1; document.getElementById('seo-p1').innerHTML = t.seoP1;
+        document.getElementById('seo-h2').innerText = t.seoH2; document.getElementById('seo-p2').innerHTML = t.seoP2;
+        document.getElementById('link-privacy').innerText = t.linkPrivacy; document.getElementById('link-terms').innerText = t.linkTerms; document.getElementById('link-contact').innerText = t.linkContact;
+
+        document.getElementById('txt-ad-title').innerText = t.adTitle;
+        document.getElementById('txt-ad-playing').innerText = t.adPlaying;
+        document.getElementById('btn-close-ad').innerText = t.adRewardBtn;
+
+        if(document.getElementById('txt-filter-dark')) {
+            document.getElementById('txt-filter-dark').innerText = t.filterDark; document.getElementById('txt-filter-soft').innerText = t.filterSoft;
+            document.getElementById('txt-filter-sepia').innerText = t.filterSepia; document.getElementById('txt-filter-dimmed').innerText = t.filterDimmed;
+        }
+        checkVipStatus();
+    }
+</script>
+</body>
+</html>
