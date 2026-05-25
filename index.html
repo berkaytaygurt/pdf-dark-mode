@@ -7,25 +7,38 @@
 
     <meta name="google-site-verification" content="FJM66Xu3hrXR8OViiiEb31jt09Xpp68ZjaLuD93R6RU" />
     
-    <!-- Gelişmiş Favicon Ayarları -->
     <link rel="icon" type="image/png" href="/icon1.png" sizes="any">
     <link rel="apple-touch-icon" href="/icon1.png">
 
     <!-- SEO Meta Tags -->
     <meta name="description" content="Convert any PDF to dark mode instantly. Protect your eyes, read comfortably at night with our free online dark mode PDF converter. Invert PDF colors easily.">
-    <meta name="keywords" content="dark mode pdf, read pdf dark mode, invert pdf colors, night mode pdf, pdf black background, pdf dark theme reader, online pdf inverter">
+    <meta name="keywords" content="dark mode pdf, read pdf dark mode, invert pdf colors, night mode pdf, pdf black background, pdf dark theme reader, online pdf inverter, pdf eye strain, dark pdf converter, sepia pdf, pdf night reading">
     
-    <!-- Open Graph (Sosyal Medya ve Link Önizlemeleri) -->
     <meta property="og:title" content="Dark Mode PDF | Free Online PDF Inverter">
     <meta property="og:description" content="Turn any PDF into dark mode for comfortable night reading. Protect your eyes with our free multi-tab PDF converter.">
     <meta property="og:image" content="https://darkmodepdf.net/icon1.png">
     <meta property="og:url" content="https://darkmodepdf.net">
     <meta property="og:type" content="website">
 
-    <!-- AdSense Ana Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1066146186486671"
-     crossorigin="anonymous"></script>
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Dark Mode PDF",
+      "url": "https://darkmodepdf.net",
+      "description": "Free online tool to convert PDF files to dark mode, sepia, soft gray, or dimmed reading themes. No upload required — all processing is done locally in your browser.",
+      "applicationCategory": "UtilityApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    }
+    </script>
 
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1066146186486671" crossorigin="anonymous"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -34,105 +47,358 @@
     </script>
 
     <style>
-        :root { --primary: #00f2ff; --secondary: #bd00ff; --bg: #0f0f13; --card-bg: rgba(25, 25, 30, 0.95); --text: #ffffff; --gold: #ffd700; }
+        :root {
+            --primary: #00f2ff;
+            --secondary: #bd00ff;
+            --bg: #0a0a0f;
+            --card-bg: rgba(20, 20, 28, 0.97);
+            --text: #f0f0f0;
+            --text-muted: #888;
+            --gold: #ffd700;
+            --border: rgba(255, 255, 255, 0.08);
+            --font-display: 'Syne', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
         
+        * { box-sizing: border-box; }
+
         body {
             background-color: var(--bg);
-            background-image: linear-gradient(135deg, #0f0f13 0%, #1a1a2e 100%);
+            background-image: 
+                radial-gradient(ellipse 80% 50% at 20% -10%, rgba(0, 242, 255, 0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(189, 0, 255, 0.06) 0%, transparent 60%),
+                linear-gradient(180deg, #0a0a0f 0%, #0f0f1a 100%);
             color: var(--text);
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh; margin: 0; display: flex; flex-direction: column;
+            font-family: var(--font-body);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* --- HEADER --- */
+        /* HEADER */
         .site-header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 30px; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05); position: fixed; width: 100%; top: 0; z-index: 100; box-sizing: border-box;
+            padding: 16px 32px;
+            background: rgba(10, 10, 15, 0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: fixed; width: 100%; top: 0; z-index: 100;
         }
-        .logo { font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; gap: 10px; }
-        .logo i { color: var(--primary); }
-
-        .lang-switch { display: flex; gap: 4px; background: rgba(255, 255, 255, 0.05); padding: 4px; border-radius: 20px;}
-        .lang-btn { background: transparent; border: none; color: #666; padding: 4px 12px; border-radius: 15px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: all 0.3s; }
-        .lang-btn.active { background: var(--primary); color: #000; box-shadow: 0 0 8px rgba(0, 242, 255, 0.3); }
-
-        /* --- LAYOUT --- */
-        .layout-wrapper { 
-            display: flex; justify-content: center; gap: 30px; max-width: 1350px; 
-            margin: 100px auto 40px auto; padding: 0 15px; width: 100%; box-sizing: border-box; flex: 1;
+        .logo {
+            font-family: var(--font-display);
+            font-size: 1.1rem; font-weight: 800;
+            display: flex; align-items: center; gap: 10px;
+            letter-spacing: -0.02em;
         }
-        
+        .logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, #00f2ff, #bd00ff);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+        .lang-switch { display: flex; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 20px; }
+        .lang-btn { background: transparent; border: none; color: #666; padding: 4px 14px; border-radius: 15px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: all 0.3s; font-family: var(--font-body); letter-spacing: 0.05em; }
+        .lang-btn.active { background: var(--primary); color: #000; box-shadow: 0 0 10px rgba(0,242,255,0.35); }
+
+        /* LAYOUT */
+        .layout-wrapper {
+            display: flex; justify-content: center; gap: 30px;
+            max-width: 1380px;
+            margin: 90px auto 60px auto;
+            padding: 0 20px; width: 100%;
+            flex: 1; align-items: flex-start;
+        }
         .sidebar {
-            width: 300px; border-radius: 12px;
-            display: none; flex-direction: column; align-items: center; justify-content: center; color: #444; font-size: 0.8rem; text-align: center; padding: 10px;
+            width: 300px; min-width: 300px;
+            border-radius: 12px;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: flex-start;
+            color: #444; font-size: 0.8rem; text-align: center;
+            padding: 10px; gap: 20px;
         }
-        @media(min-width: 1200px) { .sidebar { display: flex; } } 
+        @media(min-width: 1200px) { .sidebar { display: flex; } }
 
-        /* --- APP CONTAINER --- */
+        /* APP CONTAINER */
         .container {
-            width: 100%; max-width: 600px; background: var(--card-bg); backdrop-filter: blur(10px); 
-            border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 24px; padding: 25px; 
-            text-align: center; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); position: relative; display: flex; flex-direction: column; gap: 15px; overflow: hidden;
+            width: 100%; max-width: 600px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px; padding: 28px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+            position: relative; display: flex; flex-direction: column; gap: 16px;
+            overflow: hidden;
         }
-        .container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--gold); }
+        .container::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
         
-        h1 { margin: 10px 0 0 0; font-size: 1.8rem; background: linear-gradient(to right, #fff, #bbb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        p.subtitle { color: #888; margin: 0; font-size: 0.9em; }
+        h1 {
+            margin: 8px 0 0 0;
+            font-family: var(--font-display);
+            font-size: 1.9rem; font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: -0.03em;
+        }
+        p.subtitle { color: var(--text-muted); margin: 0; font-size: 0.88em; font-weight: 300; }
 
-        /* --- APP ELEMENTS --- */
-        .vip-area { display: flex; flex-direction: column; align-items: center; margin-bottom: 5px; gap: 5px; }
-        .vip-btn { background: rgba(255,255,255,0.05); border: 1px solid #444; color: #aaa; padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
-        .vip-btn:hover { background: rgba(255,255,255,0.1); }
-        .vip-btn.active { background: linear-gradient(45deg, var(--gold), #ffaa00); color: #000; border: none; font-weight: bold; transform: scale(1.05); }
-        .vip-benefits { font-size: 0.75rem; color: #888; line-height: 1.3; transition: all 0.3s; height: auto; opacity: 1; }
-        .vip-benefits.hidden { opacity: 0; height: 0; overflow: hidden; margin: 0; }
+        /* VIP */
+        .vip-area { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .vip-btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: #aaa; padding: 9px 22px; border-radius: 20px;
+            font-size: 0.85rem; cursor: pointer;
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.3s; font-family: var(--font-body);
+        }
+        .vip-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+        .vip-btn.active {
+            background: linear-gradient(45deg, var(--gold), #ffaa00);
+            color: #000; border: none; font-weight: 700;
+            transform: scale(1.04);
+            box-shadow: 0 4px 20px rgba(255,215,0,0.3);
+        }
+        .vip-benefits { font-size: 0.75rem; color: #777; line-height: 1.4; }
+        .vip-benefits.hidden { display: none; }
 
-        .drop-zone { border: 2px dashed rgba(255, 255, 255, 0.2); border-radius: 16px; height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(255,255,255,0.02); cursor: pointer; transition: all 0.3s; margin-top: 5px; }
-        .drop-zone:hover, .drop-zone.dragover { border-color: var(--primary); background: rgba(0, 242, 255, 0.05); }
-        .drop-zone i { font-size: 30px; color: #555; margin-bottom: 5px; }
-        .file-info { display: none; margin-top: 5px; color: var(--primary); font-weight: 600; font-size:0.8rem; }
+        /* DROP ZONE */
+        .drop-zone {
+            border: 2px dashed rgba(255,255,255,0.12);
+            border-radius: 16px; height: 105px;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.015);
+            cursor: pointer; transition: all 0.3s; gap: 6px;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(0,242,255,0.04);
+            box-shadow: 0 0 20px rgba(0,242,255,0.06);
+        }
+        .drop-zone i { font-size: 28px; color: #444; transition: color 0.3s; }
+        .drop-zone:hover i { color: var(--primary); }
+        .drop-zone span { font-size: 0.85rem; color: #555; }
+        .file-info { display: none; color: var(--primary); font-weight: 600; font-size: 0.82rem; }
         #fileInput { display: none; }
 
-        #filter-grid { display: none; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; width: 100%; }
-        .filter-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px; cursor: pointer; transition: all 0.3s; position: relative; }
-        .filter-card:hover { transform: translateY(-5px); border-color: var(--primary); }
-        .filter-card canvas { width: 100%; height: auto; border-radius: 6px; display: block; }
-        .filter-name { margin-top: 8px; font-size: 0.85rem; font-weight: bold; color: #ccc; }
-        .card-loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2; border-radius:12px;}
-        .spinner-small { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s linear infinite; }
-        
-        #status { font-size: 0.9em; color: #666; margin-top: 15px; min-height: 1.2em; font-weight: bold;}
+        /* FILTER GRID */
+        #filter-grid { display: none; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+        .filter-card {
+            background: rgba(255,255,255,0.025);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 10px;
+            cursor: pointer; transition: all 0.3s; position: relative;
+        }
+        .filter-card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 8px 24px rgba(0,242,255,0.1); }
+        .filter-card canvas { width: 100%; height: auto; border-radius: 8px; display: block; }
+        .filter-name { margin-top: 8px; font-size: 0.82rem; font-weight: 600; color: #ccc; font-family: var(--font-display); }
+        .card-loader {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;
+            z-index: 2; border-radius: 14px;
+        }
+        .spinner-small {
+            width: 22px; height: 22px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%; border-top-color: var(--primary);
+            animation: spin 0.8s linear infinite;
+        }
+
+        #status { font-size: 0.88em; color: #555; min-height: 1.3em; font-weight: 600; letter-spacing: 0.02em; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* --- MODALS --- */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: #1a1a2e; border: 1px solid #444; padding: 30px; border-radius: 24px; text-align: center; width: 85%; max-width: 400px; box-shadow: 0 0 30px rgba(0, 0, 0, 0.8); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .modal-title { font-size: 1.5rem; color: #fff; margin-bottom: 10px; font-weight: bold; }
-        .btn-action { background: var(--gold); color: #000; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; font-size: 1rem;}
-        .btn-action:active { transform: scale(0.95); }
-        
-        .ad-video-mockup { height: 200px; background: #000; border: 1px solid #333; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; color: #666; border-radius: 12px;}
-        #ad-timer { font-size: 2rem; color: #fff; font-weight: bold; margin-bottom: 15px; }
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal-content { background: #14141e; border: 1px solid #2a2a3a; padding: 32px; border-radius: 24px; text-align: center; width: 88%; max-width: 380px; box-shadow: 0 0 60px rgba(0,0,0,0.8); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .modal-title { font-size: 1.4rem; color: #fff; margin-bottom: 16px; font-weight: 800; font-family: var(--font-display); }
+        .btn-action { background: var(--gold); color: #000; border: none; padding: 13px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; font-size: 1rem; font-family: var(--font-display); }
+        .btn-action:active { transform: scale(0.97); }
+        .ad-video-mockup { height: 180px; background: #0a0a0a; border: 1px solid #222; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; color: #444; border-radius: 12px; flex-direction: column; gap: 10px; }
+        #ad-timer { font-size: 2.2rem; color: #fff; font-weight: 800; margin-bottom: 12px; font-family: var(--font-display); }
 
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-        /* --- SEO CONTENT --- */
-        .seo-section { max-width: 800px; margin: 0 auto 60px auto; padding: 20px; color: #aaa; line-height: 1.6; }
-        .seo-section h2 { color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 40px;}
-        .seo-section h3 { color: #eee; margin-top: 25px; }
-        .seo-section p { font-size: 0.95rem; }
+        /* ======================================
+           SEO CONTENT AREA
+        ====================================== */
+        .content-area {
+            max-width: 860px;
+            margin: 0 auto 80px auto;
+            padding: 0 24px;
+            color: #c0c0c0;
+            font-size: 0.97rem;
+            line-height: 1.85;
+            font-family: var(--font-body);
+        }
 
-        /* --- FOOTER --- */
-        .site-footer { text-align: center; padding: 20px; background: rgba(0,0,0,0.8); color: #666; font-size: 0.8rem; border-top: 1px solid #222; margin-top: auto;}
+        /* STATS BAR */
+        .stats-bar {
+            display: flex; gap: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px; overflow: hidden;
+            margin-bottom: 60px;
+        }
+        .stat-item {
+            flex: 1; padding: 22px 16px; text-align: center;
+            border-right: 1px solid var(--border);
+        }
+        .stat-item:last-child { border-right: none; }
+        .stat-num { font-family: var(--font-display); font-size: 1.9rem; font-weight: 800; color: var(--primary); display: block; line-height: 1; margin-bottom: 4px; }
+        .stat-label { font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.08em; }
+
+        /* FAQ SECTION */
+        .faq-section { margin-bottom: 60px; }
+        .faq-item {
+            border: 1px solid var(--border);
+            border-radius: 14px; margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .faq-q {
+            padding: 18px 22px;
+            cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            font-weight: 600; color: #ddd;
+            font-size: 0.95rem;
+            background: rgba(255,255,255,0.02);
+            transition: background 0.2s;
+            user-select: none;
+        }
+        .faq-q:hover { background: rgba(255,255,255,0.04); }
+        .faq-q i { color: var(--primary); transition: transform 0.3s; font-size: 0.8rem; }
+        .faq-q.open i { transform: rotate(180deg); }
+        .faq-a {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            padding: 0 22px; color: #999;
+            font-size: 0.92rem; line-height: 1.8;
+        }
+        .faq-a.open { max-height: 400px; padding: 16px 22px 20px; }
+
+        /* THEME COMPARISON */
+        .theme-table {
+            width: 100%; border-collapse: collapse;
+            margin: 28px 0; font-size: 0.9rem;
+        }
+        .theme-table th {
+            background: rgba(0,242,255,0.06);
+            color: var(--primary);
+            padding: 13px 16px; text-align: left;
+            font-family: var(--font-display);
+            font-size: 0.82rem; letter-spacing: 0.06em;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(0,242,255,0.2);
+        }
+        .theme-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #bbb; vertical-align: top; }
+        .theme-table tr:last-child td { border-bottom: none; }
+        .theme-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .badge {
+            display: inline-block; padding: 3px 10px;
+            border-radius: 20px; font-size: 0.73rem; font-weight: 700;
+            background: rgba(0,242,255,0.12); color: var(--primary);
+            border: 1px solid rgba(0,242,255,0.2);
+        }
+        .badge-gold { background: rgba(255,215,0,0.12); color: var(--gold); border-color: rgba(255,215,0,0.25); }
+
+        /* HOW IT WORKS */
+        .steps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin: 28px 0; }
+        .step-card {
+            background: rgba(255,255,255,0.025);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 22px 18px;
+            text-align: center;
+        }
+        .step-num {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display); font-weight: 800; font-size: 1.1rem;
+            color: #000; margin: 0 auto 12px auto;
+        }
+        .step-title { font-weight: 700; color: #ddd; margin-bottom: 6px; font-size: 0.9rem; font-family: var(--font-display); }
+        .step-desc { font-size: 0.83rem; color: #777; line-height: 1.6; }
+
+        /* ARTICLE SECTIONS */
+        .article-section { margin-bottom: 56px; }
+        .article-section h2 {
+            font-family: var(--font-display);
+            font-size: 1.45rem; font-weight: 800;
+            color: #ffffff; margin: 0 0 16px 0;
+            letter-spacing: -0.02em;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .article-section h3 {
+            font-family: var(--font-display);
+            font-size: 1.1rem; font-weight: 700;
+            color: #e0e0e0; margin: 28px 0 10px 0;
+        }
+        .article-section p { margin: 0 0 14px 0; }
+        .article-section ul, .article-section ol {
+            padding-left: 20px; margin: 10px 0 16px 0;
+        }
+        .article-section li { margin-bottom: 8px; }
+        .article-section strong { color: #e0e0e0; }
+
+        /* TIP BOX */
+        .tip-box {
+            background: rgba(0,242,255,0.05);
+            border: 1px solid rgba(0,242,255,0.15);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 12px 12px 0;
+            padding: 14px 18px; margin: 20px 0;
+            font-size: 0.9rem; color: #aad8dc;
+        }
+        .tip-box strong { color: var(--primary); }
+
+        .warn-box {
+            background: rgba(255,165,0,0.05);
+            border: 1px solid rgba(255,165,0,0.15);
+            border-left: 3px solid #ffa500;
+            border-radius: 0 12px 12px 0;
+            padding: 14px 18px; margin: 20px 0;
+            font-size: 0.9rem; color: #d4b896;
+        }
+
+        /* MOBILE */
+        @media(max-width: 600px) {
+            .stats-bar { flex-wrap: wrap; }
+            .stat-item { min-width: 48%; border-right: none; border-bottom: 1px solid var(--border); }
+            .stat-item:nth-child(even) { border-left: 1px solid var(--border); }
+            h1 { font-size: 1.5rem; }
+        }
+
+        /* FOOTER */
+        .site-footer {
+            text-align: center; padding: 24px;
+            background: rgba(0,0,0,0.6);
+            color: #555; font-size: 0.8rem;
+            border-top: 1px solid #1a1a1a;
+            margin-top: auto;
+        }
         .site-footer a { color: var(--primary); text-decoration: none; margin: 0 10px; }
+        .site-footer a:hover { text-decoration: underline; }
+
+        /* AD LABEL */
+        .ad-label { font-size: 0.7rem; color: #444; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
     </style>
 </head>
 <body>
 
 <!-- HEADER -->
 <header class="site-header">
-    <div class="logo"><i class="fa-solid fa-moon"></i> Dark Mode PDF</div>
+    <div class="logo">
+        <div class="logo-icon"><i class="fa-solid fa-moon" style="color:#000;"></i></div>
+        Dark Mode PDF
+    </div>
     <div class="lang-switch">
         <button class="lang-btn" onclick="setLanguage('tr')" id="btn-tr">TR</button>
         <button class="lang-btn active" onclick="setLanguage('en')" id="btn-en">EN</button>
@@ -144,36 +410,32 @@
 
     <!-- LEFT SIDEBAR -->
     <aside class="sidebar sidebar-left">
-        <p>Advertisement</p>
-        <div style="width:300px;">
-            <ins class="adsbygoogle"
-                 style="display:inline-block;width:300px;height:600px"
-                 data-ad-client="ca-pub-1066146186486671"
-                 data-ad-slot="4585648854"></ins>
-            <script>
-                 (adsbygoogle = window.adsbygoogle || []).push({});
-            </script>
-        </div>
+        <div class="ad-label">Advertisement</div>
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:300px;height:600px"
+             data-ad-client="ca-pub-1066146186486671"
+             data-ad-slot="4585648854"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </aside>
 
     <!-- APP CONTAINER -->
     <div class="container">
         <h1 id="txt-title">Dark Mode PDF</h1>
-        <p class="subtitle" id="txt-subtitle">Advanced Reading Mode</p>
+        <p class="subtitle" id="txt-subtitle">Advanced Reading Mode — 4 Themes</p>
 
         <div class="vip-area">
             <button id="vip-btn" class="vip-btn" onclick="handleVipClick()">
                 <i class="fa-solid fa-crown"></i>
-                <span id="txt-vip">VIP Modu (24s)</span>
+                <span id="txt-vip">VIP Mode (Watch 1 Ad)</span>
             </button>
             <div id="vip-benefits" class="vip-benefits">
-                <i class="fa-solid fa-ban"></i> Reklamsız & <i class="fa-solid fa-layer-group"></i> 5 Dosya Aynı Anda
+                <i class="fa-solid fa-ban"></i> Ad-Free &nbsp;·&nbsp; <i class="fa-solid fa-layer-group"></i> Up to 5 Files at Once
             </div>
         </div>
 
         <label for="fileInput" class="drop-zone" id="dropZone">
             <i class="fa-solid fa-cloud-arrow-up"></i>
-            <div id="dropText">Select PDF File</div>
+            <span id="dropText">Drop or click to select a PDF file</span>
             <div class="file-info" id="fileInfo"></div>
         </label>
         <input type="file" id="fileInput" accept="application/pdf">
@@ -205,51 +467,321 @@
 
     <!-- RIGHT SIDEBAR -->
     <aside class="sidebar sidebar-right">
-        <p>Advertisement</p>
-        <div style="width:300px;">
-            <ins class="adsbygoogle"
-                 style="display:inline-block;width:300px;height:600px"
-                 data-ad-client="ca-pub-1066146186486671"
-                 data-ad-slot="4585648854"></ins>
-            <script>
-                 (adsbygoogle = window.adsbygoogle || []).push({});
-            </script>
-        </div>
+        <div class="ad-label">Advertisement</div>
+        <ins class="adsbygoogle"
+             style="display:inline-block;width:300px;height:600px"
+             data-ad-client="ca-pub-1066146186486671"
+             data-ad-slot="4585648854"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </aside>
 
 </div>
 
-<!-- TAM EKRAN REKLAM MODALI -->
+<!-- AD MODAL -->
 <div id="rewardAdModal" class="modal">
     <div class="modal-content">
-        <div class="modal-title" style="color: var(--gold);" id="txt-ad-title">Sponsorlu Reklam</div>
+        <div class="modal-title" style="color: var(--gold);" id="txt-ad-title">Sponsored Ad</div>
         <div class="ad-video-mockup">
-            <i class="fa-solid fa-play" style="font-size: 2rem; color: #333;"></i>
-            <span style="margin-left: 10px;" id="txt-ad-playing">Reklam Oynatılıyor...</span>
+            <i class="fa-solid fa-play" style="font-size: 2rem;"></i>
+            <span id="txt-ad-playing" style="font-size:0.85rem;">Ad is playing...</span>
         </div>
         <div id="ad-timer">3</div>
-        <button id="btn-close-ad" class="btn-action" style="display: none;" onclick="closeAdAndReward()">Ödülü Al & Kapat</button>
+        <button id="btn-close-ad" class="btn-action" style="display: none;" onclick="closeAdAndReward()">Claim Reward & Close</button>
     </div>
 </div>
 
-<!-- SEO ARTICLES SECTION -->
-<section class="seo-section" id="seo-content">
-    <h2 id="seo-h1">Why Use a Dark Mode PDF Reader?</h2>
-    <p id="seo-p1">Reading long PDF documents on bright white screens can cause severe eye strain and disrupt your sleep cycle, especially at night. Most standard PDF readers do not offer a native dark theme. Our free online <strong>dark mode PDF converter</strong> inverts the colors of your files, turning glaring white backgrounds into soothing dark colors (black, gray, or sepia) without modifying the original text or layout.</p>
-    
-    <h3 id="seo-h2">Best Features of Our PDF Color Inverter</h3>
-    <p id="seo-p2">
-        1. <b>100% Privacy & Local Processing:</b> All PDF color inversion is done locally right in your browser. We never upload your sensitive documents to any server.<br>
-        2. <b>Multiple Reading Themes:</b> Choose between Pure Dark (Black), Soft Gray, Dimmed, or Sepia mode based on your room's lighting.<br>
-        3. <b>Batch Convert (VIP):</b> Need to read multiple documents? Convert and open multiple PDF files simultaneously to save time.
-    </p>
-</section>
+<!-- ======================================
+     RICH SEO CONTENT SECTION
+====================================== -->
+<div class="content-area">
+
+    <!-- STATS -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span class="stat-num">100%</span>
+            <span class="stat-label">Browser-Based</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num">4</span>
+            <span class="stat-label">Reading Themes</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num">0<small style="font-size:1rem;">s</small></span>
+            <span class="stat-label">Upload Required</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-num">Free</span>
+            <span class="stat-label">Forever</span>
+        </div>
+    </div>
+
+    <!-- SECTION 1: MAIN INTRO -->
+    <div class="article-section" id="sec-intro">
+        <h2 id="seo-h1">What Is Dark Mode PDF and Why Do You Need It?</h2>
+        <p id="seo-p1">Reading long PDF documents on a bright white screen can cause serious eye strain, headaches, and even disrupt your sleep cycle — especially during evening hours. Most standard PDF readers, including Adobe Acrobat, Preview on macOS, and browser-based readers, do not offer a reliable native dark theme that truly inverts the page content. Their so-called "dark mode" often only darkens the interface chrome around the document, leaving the white page itself completely untouched.</p>
+        <p>Our free, browser-based <strong>dark mode PDF converter</strong> solves this problem at the source. Instead of merely overlaying a dark UI skin, it actually processes your PDF file and outputs a brand-new PDF where the page colors are transformed — white backgrounds become deep black or dark gray, and dark text becomes light, making the document genuinely comfortable to read in low-light environments.</p>
+
+        <div class="tip-box">
+            <strong>💡 Did you know?</strong> Studies in visual ergonomics suggest that reading light text on a dark background can reduce the overall amount of blue light your eyes receive from a screen, which may contribute to better sleep quality when reading before bed.
+        </div>
+
+        <p>Whether you are a student reading academic papers late at night, a developer reviewing technical documentation, a lawyer going through lengthy contracts, or a book lover reading e-books in PDF format, our tool gives you a comfortable reading experience across four carefully designed color themes.</p>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="article-section" id="sec-how">
+        <h2>How to Convert a PDF to Dark Mode — Step by Step</h2>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-num">1</div>
+                <div class="step-title">Select Your PDF</div>
+                <div class="step-desc">Click the upload area or drag and drop your PDF file directly onto it. No account or sign-up required.</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num">2</div>
+                <div class="step-title">Preview All Themes</div>
+                <div class="step-desc">Four live preview thumbnails are generated instantly from your PDF's first page so you can compare styles side by side.</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num">3</div>
+                <div class="step-title">Choose a Style</div>
+                <div class="step-desc">Click the theme that best suits your lighting and preference — Dark, Soft Gray, Sepia, or Dimmed.</div>
+            </div>
+            <div class="step-card">
+                <div class="step-num">4</div>
+                <div class="step-title">Download Instantly</div>
+                <div class="step-desc">Your converted dark-mode PDF is generated and downloaded to your device in seconds — all pages included.</div>
+            </div>
+        </div>
+        <p>The entire conversion process happens locally inside your web browser using modern JavaScript libraries. <strong>Your PDF file is never sent to any server.</strong> This means your documents — whether they contain personal data, business contracts, medical records, or academic research — remain completely private and secure at all times.</p>
+    </div>
+
+    <!-- THEME COMPARISON -->
+    <div class="article-section" id="sec-themes">
+        <h2>Comparing the 4 PDF Reading Themes</h2>
+        <p>Not all dark modes are created equal. Different lighting conditions and personal preferences call for different color treatments. Here is a detailed breakdown of each theme available in our PDF color inverter:</p>
+
+        <table class="theme-table">
+            <thead>
+                <tr>
+                    <th>Theme</th>
+                    <th>Background Color</th>
+                    <th>Best For</th>
+                    <th>Eye Comfort</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>⚫ Dark (Invert)</strong></td>
+                    <td>Pure Black</td>
+                    <td>OLED screens, complete darkness</td>
+                    <td><span class="badge">Maximum</span></td>
+                </tr>
+                <tr>
+                    <td><strong>🌑 Soft (Gray)</strong></td>
+                    <td>Dark Charcoal</td>
+                    <td>Dimly lit rooms, long sessions</td>
+                    <td><span class="badge">High</span></td>
+                </tr>
+                <tr>
+                    <td><strong>📜 Sepia (Book)</strong></td>
+                    <td>Warm Amber/Brown</td>
+                    <td>Book lovers, warm-toned lighting</td>
+                    <td><span class="badge badge-gold">Natural</span></td>
+                </tr>
+                <tr>
+                    <td><strong>🕶️ Dimmed</strong></td>
+                    <td>Semi-transparent Black</td>
+                    <td>Moderate environments, daytime use</td>
+                    <td><span class="badge">Moderate</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>Dark (Invert) Mode</h3>
+        <p>The <strong>Dark Invert</strong> theme applies a full color inversion to the PDF using the Difference blend mode. Every white pixel becomes black, and every black pixel becomes white — creating a perfectly inverted document. This mode is ideal for OLED and AMOLED displays where pure black pixels are physically turned off, saving battery life on mobile devices in addition to reducing eye strain. It works best for text-heavy documents like research papers, ebooks, and reports where images are not the primary content.</p>
+
+        <h3>Soft Gray Mode</h3>
+        <p>The <strong>Soft Gray</strong> theme is a gentler version of the full invert. After inverting the colors, a subtle dark overlay is applied to reduce the harshest contrasts. The result is a document with a dark charcoal background rather than pure black, which many users find easier on the eyes during extended reading sessions. If you find the pure dark mode too high-contrast, this is the recommended alternative.</p>
+
+        <h3>Sepia (Book) Mode</h3>
+        <p>Inspired by the warm, aged look of paper books and vintage documents, the <strong>Sepia</strong> theme transforms the PDF with a warm amber-brown color overlay using the Multiply blend mode. Instead of a cold white or blue-tinted background, you get a cozy, warm page tone that closely resembles reading a physical paperback book. This theme is especially popular among literary readers, history enthusiasts, and anyone who finds cold white screens fatiguing. It is also recommended if you use a warm color temperature filter or night shift mode on your device.</p>
+
+        <h3>Dimmed Mode</h3>
+        <p>The <strong>Dimmed</strong> theme is the most subtle option. It keeps the original document colors largely intact but applies a semi-transparent black overlay that reduces overall brightness by about 50%. This is a good middle ground for users who are reading in a moderately lit room and just want to take the edge off a bright PDF without committing to a full dark-mode transformation. It also works well for PDFs with many charts, diagrams, or color images that might look odd when fully inverted.</p>
+    </div>
+
+    <!-- PRIVACY SECTION -->
+    <div class="article-section" id="sec-privacy">
+        <h2>100% Private — Your PDF Files Never Leave Your Device</h2>
+        <p>Privacy is a fundamental concern when dealing with digital documents. Many online file conversion tools require you to upload your file to a remote server, where it is processed, stored (often temporarily), and then deleted. During this process, your file could theoretically be intercepted, logged, or retained beyond the stated deletion window.</p>
+        <p>Our <strong>dark mode PDF tool operates entirely within your browser</strong> using two well-established open-source libraries:</p>
+        <ul>
+            <li><strong>PDF-Lib</strong> — used to read and write the PDF file structure, embed pages, and apply visual blend mode layers</li>
+            <li><strong>PDF.js</strong> — developed by Mozilla, used to render the live preview thumbnails you see before downloading</li>
+        </ul>
+        <p>When you select a PDF file, JavaScript reads it from your device's memory directly. No HTTP request is made to upload the file. All processing — page rendering, color transformation, and file generation — takes place inside your browser tab. The converted PDF file is generated as a Blob URL and downloaded directly to your machine, bypassing any server entirely.</p>
+
+        <div class="warn-box">
+            <strong>⚠️ Note about complex PDFs:</strong> Some PDF files use advanced features like embedded 3D models, interactive forms, encrypted content, or non-standard encoding that may not render with full fidelity after color transformation. For best results, use text-heavy or image-light PDF documents.
+        </div>
+    </div>
+
+    <!-- USE CASES -->
+    <div class="article-section" id="sec-usecases">
+        <h2 id="seo-h2">Who Uses Dark Mode PDF? Common Use Cases</h2>
+        <p id="seo-p2">The need to read PDFs comfortably in low-light environments spans many professions and daily activities. Here are the most common scenarios where our <strong>PDF color inverter</strong> proves most useful:</p>
+
+        <h3>📚 Students and Researchers</h3>
+        <p>Academic life often involves reading hundreds of pages of journal articles, lecture slides, and textbooks — frequently late at night or in dimly lit libraries. Converting research papers and study materials to dark mode significantly reduces the visual fatigue that comes from staring at bright white academic PDFs for hours. Many students report improved concentration and fewer headaches after switching to a dark reading format.</p>
+
+        <h3>💻 Software Developers and Engineers</h3>
+        <p>Technical documentation, API references, RFC standards, and language specifications are almost universally distributed as white-background PDFs. Developers who live in dark-themed IDEs and code editors often find jarring contrast shifts when they need to reference documentation. Converting these PDFs to dark mode creates a consistent, comfortable experience that matches the rest of their workflow.</p>
+
+        <h3>⚖️ Legal and Business Professionals</h3>
+        <p>Contracts, briefs, compliance documents, and business reports are among the most text-dense PDF formats in existence. Lawyers, paralegals, and business analysts who review hundreds of pages of such documents daily can benefit enormously from a softer reading palette, particularly when working in the evenings or in low-light office environments.</p>
+
+        <h3>📖 E-Book and Fiction Readers</h3>
+        <p>While dedicated e-reader apps have built-in dark modes, many readers prefer to keep their PDFs on desktop or use general-purpose PDF readers that lack robust theme support. Converting a novel or collection of short stories to Sepia mode in particular replicates the warm, cozy feeling of reading a physical paperback — without needing to purchase a separate e-reader application.</p>
+
+        <h3>🎨 Designers and Creatives</h3>
+        <p>Portfolios, mood boards, brand guidelines, and creative briefs often come as PDFs. Designers working on dark-themed projects may wish to preview reference materials in a dark color context to better envision how their designs translate. The Dimmed mode is particularly useful here, as it reduces brightness while preserving color accuracy.</p>
+    </div>
+
+    <!-- FAQ SECTION -->
+    <div class="article-section faq-section" id="sec-faq">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Does dark mode PDF conversion affect the text quality or font rendering?
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <div class="faq-a">
+                No. The tool embeds your original PDF page as a vector layer and then applies a color overlay on top using blend modes. The text, fonts, and vector elements remain pixel-perfect at any zoom level. Only the color values are altered — the underlying document structure is preserved entirely.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Can I convert a multi-page PDF — will all pages be processed?
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <div class="faq-a">
+                Yes. When you choose a theme and click to download, the tool processes every single page of your PDF, not just the first page (which is only used for the preview thumbnails). The resulting downloaded file will contain all pages in the chosen dark mode style.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Why does image-heavy PDFs look strange after dark mode conversion?
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <div class="faq-a">
+                The Dark (Invert) and Soft Gray modes work by applying a color inversion, which means photographs and color images will also appear inverted — skin tones will look greenish, the sky will appear orange, etc. For documents containing photos or diagrams, we recommend the Dimmed mode, which simply reduces overall brightness without inverting colors.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Is there a file size limit for the PDF I can convert?
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <div class="faq-a">
+                Since all processing happens in your browser, the practical limit depends on your device's available RAM. In general, PDF files up to 100–200 MB should process without issues on a modern computer. Very large files (500 MB+) may cause the browser tab to become slow or unresponsive. For extremely large documents, consider splitting them first.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Does the tool work on mobile phones and tablets?
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <div class="faq-a">
+                Yes, the tool is fully responsive and works in mobile browsers including Chrome, Safari, and Firefox on both iOS and Android. Keep in mind that processing very large PDFs on mobile may be slower due to limited RAM compared to desktop computers.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                What is VIP mode and how does it work?
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <div class="faq-a">
+                VIP mode is activated by watching a short 3-second sponsored ad. Once activated, it stays active for 3 hours (stored in your browser's local storage). During this time you can upload and convert up to 5 PDF files simultaneously — useful for batch processing a folder of documents — without any additional ads.
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                Which theme is best for reading at night with the lights off?
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <div class="faq-a">
+                For complete darkness, the <strong>Dark (Invert)</strong> mode gives the lowest overall screen brightness with maximum contrast between background and text. If you find pure black too harsh, switch to <strong>Soft (Gray)</strong> for a slightly warmer dark tone. For a more comfortable extended reading experience in bed, many users prefer the <strong>Sepia (Book)</strong> mode, as its warm amber tone is less stimulating to the eyes than cool white or blue-white light.
+            </div>
+        </div>
+    </div>
+
+    <!-- TIPS SECTION -->
+    <div class="article-section" id="sec-tips">
+        <h2>Expert Tips for Comfortable PDF Reading</h2>
+        <p>Converting your PDF to dark mode is a great first step, but combining it with a few other habits will give you the best possible reading experience.</p>
+
+        <h3>1. Adjust Your Screen Brightness</h3>
+        <p>Even with dark mode enabled, if your screen brightness is set to maximum, you will still experience significant eye strain. Lower your screen brightness to around 30–50% when reading in dark mode. Many displays also have an adaptive brightness feature that automatically adjusts based on ambient light — this pairs excellently with a dark mode PDF.</p>
+
+        <h3>2. Enable Night Shift or Blue Light Filter</h3>
+        <p>Most modern operating systems — Windows 11 (Night Light), macOS (Night Shift), Android, and iOS — offer a built-in blue light filter that shifts your screen's color temperature toward warmer amber tones in the evening. Pairing our Sepia PDF theme with your device's built-in warm color mode creates a reading environment that is as gentle on the eyes as possible.</p>
+
+        <h3>3. Use a 20-20-20 Rule</h3>
+        <p>Regardless of display settings, prolonged screen reading strains the eye's focusing muscles. Every 20 minutes, look at something at least 20 feet away for 20 seconds. This simple habit gives your eyes' ciliary muscles a chance to relax and significantly reduces cumulative fatigue over long reading sessions.</p>
+
+        <h3>4. Choose the Right Theme for Your Environment</h3>
+        <p>Match your PDF theme to your ambient lighting. In very dark rooms, the <strong>Dimmed</strong> or <strong>Sepia</strong> modes are gentler options than the full invert. In bright rooms or under direct sunlight, the original white-background PDF may actually be more readable. Dark mode is most beneficial in moderate-to-low ambient light conditions.</p>
+
+        <h3>5. Consider Font Size and Zoom Level</h3>
+        <p>When reading an inverted PDF, your eyes are doing less work on background processing but may need text to be slightly larger to compensate for any reduction in perceived sharpness that sometimes accompanies color inversion. Try increasing your PDF viewer's zoom to 120–140% for a more comfortable reading size.</p>
+    </div>
+
+    <!-- TECHNICAL SECTION -->
+    <div class="article-section" id="sec-tech">
+        <h2>How the PDF Color Conversion Technology Works</h2>
+        <p>For the technically curious, here is a brief explanation of how our <strong>PDF dark mode conversion</strong> works under the hood.</p>
+
+        <h3>The PDF-Lib Blend Mode Approach</h3>
+        <p>Traditional color inversion tools work by rasterizing each page to an image and then inverting the pixel values — a lossy process that degrades text sharpness and increases file size. Our tool takes a different approach. Using the <strong>PDF-Lib</strong> library, it embeds your original PDF pages as vector graphics and applies color transformation layers using <strong>PDF blend modes</strong> — the same technology used in professional graphics software like Adobe Illustrator and Photoshop.</p>
+        <p>The Dark and Soft modes use the <code>Difference</code> blend mode, which mathematically inverts each color channel without rasterizing the content. The Sepia mode uses a <code>Multiply</code> blend mode with a warm amber color, and the Dimmed mode applies a semi-transparent black overlay using standard opacity blending. Because the original page content is preserved as a vector element, text remains fully sharp and searchable at any zoom level in the output file.</p>
+
+        <h3>Browser-Side Processing with PDF.js</h3>
+        <p>For generating the live preview thumbnails, the tool uses <strong>PDF.js</strong> — Mozilla's open-source JavaScript PDF renderer, the same library that powers Firefox's built-in PDF viewer. After the conversion layer is applied in memory, the resulting PDF data is rendered to an HTML Canvas element to produce the preview images you see, all within milliseconds.</p>
+
+        <div class="tip-box">
+            <strong>📋 Open Source:</strong> Both PDF-Lib and PDF.js are fully open-source, actively maintained libraries with millions of weekly downloads. Their source code is publicly auditable, which is part of why we trust them to handle your sensitive documents without any privacy concerns.
+        </div>
+    </div>
+
+    <!-- FINAL AD SLOT -->
+    <div style="text-align:center; margin: 20px 0 40px;">
+        <div class="ad-label" style="margin-bottom:10px;">Advertisement</div>
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-1066146186486671"
+             data-ad-slot="4585648854"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+
+</div>
 
 <!-- FOOTER -->
 <footer class="site-footer">
-    <div>&copy; 2026 Dark Mode PDF. All rights reserved.</div>
-    <div style="margin-top: 10px;">
-        <a href="#" id="link-privacy">Privacy Policy</a> | 
+    <div style="margin-bottom: 10px;">
+        &copy; 2026 Dark Mode PDF. All rights reserved.
+    </div>
+    <div>
+        <a href="#" id="link-privacy">Privacy Policy</a> |
         <a href="#" id="link-terms">Terms of Service</a> |
         <a href="#" id="link-contact">Contact</a>
     </div>
@@ -258,31 +790,31 @@
 <script>
     const translations = {
         tr: {
-            title: "Dark Mode PDF", subtitle: "Gelişmiş Okuma Modu", dropText: "PDF Dosyası Sürükle veya Seç", dropTextMulti: "PDF Dosyaları Seç (Çoklu)",
-            statusReady: "Harika! Şimdi bir stil seçin:", statusSelect: "Lütfen dosya seçin!", statusVipOnly: "Çoklu dosya seçimi VIP modunda kullanılabilir!",
-            statusProcessing: "Dönüştürülüyor...", statusGenerating: "Önizlemeler Hazırlanıyor...", statusComplete: "İşlem Tamamlandı!",
-            statusOpening: "Kaydediliyor...", statusOpened: "İndirildi!",
-            vipText: "🎥 1 Reklam İzle 👉 VIP Ol", vipActive: "VIP Modu Aktif", vipBenefits: "Reklamsız & Sınırsız Kullanım",
-            filterDark: "⚫ Koyu (Ters)", filterSoft: "🌑 Yumuşak (Gri)", filterSepia: "📜 Kitap Modu (Sepia)", filterDimmed: "🕶️ Loş Işık",
-            adTitle: "Sponsorlu Reklam", adPlaying: "Reklam Oynatılıyor...", adRewardBtn: "Ödülü Al & Kapat",
-            seoH1: "PDF'ler İçin Neden Karanlık Mod Okuyucu Kullanmalısınız?",
-            seoP1: "Parlak ekranlarda uzun süre PDF okumak ciddi göz yorgunluğuna sebep olur. Ücretsiz çevrimiçi <strong>karanlık mod PDF dönüştürücü</strong> aracımız, orijinal metinleri bozmadan belge arka planlarınızı göz yormayan siyah, gri veya sepia tonlara çevirir. Kurulum gerektirmez.",
-            seoH2: "PDF Renk Tersine Çevirme Aracımızın Özellikleri",
-            seoP2: "1. <b>Tam Gizlilik:</b> Dosyalarınız asla sunucularımıza yüklenmez, PDF renk dönüştürme işlemi tamamen tarayıcınızda gerçekleşir.<br>2. <b>Okuma Filtreleri:</b> Saf Siyah, Yumuşak Gri, Loş Işık veya Sepia modlarını seçebilirsiniz.<br>3. <b>Çoklu İşlem:</b> Aynı anda birden fazla PDF belgesini dönüştürün.",
+            title: "Dark Mode PDF", subtitle: "Gelişmiş Okuma Modu — 4 Tema",
+            dropText: "PDF dosyasını seç veya buraya sürükle", dropTextMulti: "PDF Dosyalarını Seç (Çoklu)",
+            statusReady: "Harika! Bir stil seçin:", statusSelect: "Lütfen önce dosya seçin!",
+            statusVipOnly: "Çoklu dosya seçimi VIP modunda kullanılabilir!",
+            statusProcessing: "Dönüştürülüyor...", statusGenerating: "Önizlemeler Yükleniyor...",
+            statusComplete: "Tamamlandı!", statusOpened: "İndirildi!",
+            vipText: "🎥 1 Reklam İzle → VIP Ol", vipActive: "VIP Modu Aktif",
+            vipBenefits: "Reklamsız &nbsp;·&nbsp; 5 Dosya Aynı Anda",
+            filterDark: "⚫ Koyu (Ters)", filterSoft: "🌑 Yumuşak (Gri)",
+            filterSepia: "📜 Sepia (Kitap)", filterDimmed: "🕶️ Loş Işık",
+            adTitle: "Sponsorlu Reklam", adPlaying: "Reklam oynatılıyor...", adRewardBtn: "Ödülü Al & Kapat",
             linkPrivacy: "Gizlilik Politikası", linkTerms: "Kullanım Koşulları", linkContact: "İletişim"
         },
         en: {
-            title: "Dark Mode PDF", subtitle: "Advanced Reading Mode", dropText: "Drop or Select PDF File", dropTextMulti: "Select PDF Files (Multi)",
-            statusReady: "Great! Select a style:", statusSelect: "Please select file(s) first!", statusVipOnly: "Multi-file is for VIP only!",
-            statusProcessing: "Converting...", statusGenerating: "Generating Previews...", statusComplete: "Completed!",
-            statusOpening: "Saving...", statusOpened: "Downloaded!",
-            vipText: "🎥 Watch 1 Ad 👉 Get VIP", vipActive: "VIP Mode Active", vipBenefits: "No Ads & Unlimited Access",
-            filterDark: "⚫ Dark (Invert)", filterSoft: "🌑 Soft (Gray)", filterSepia: "📜 Sepia (Book)", filterDimmed: "🕶️ Dimmed",
+            title: "Dark Mode PDF", subtitle: "Advanced Reading Mode — 4 Themes",
+            dropText: "Drop or click to select a PDF file", dropTextMulti: "Select PDF Files (Multi)",
+            statusReady: "Great! Now choose a style:", statusSelect: "Please select a file first!",
+            statusVipOnly: "Multi-file upload requires VIP mode!",
+            statusProcessing: "Converting...", statusGenerating: "Generating Previews...",
+            statusComplete: "Conversion Complete!", statusOpened: "Downloaded!",
+            vipText: "🎥 Watch 1 Ad → Get VIP", vipActive: "VIP Mode Active",
+            vipBenefits: "Ad-Free &nbsp;·&nbsp; Up to 5 Files at Once",
+            filterDark: "⚫ Dark (Invert)", filterSoft: "🌑 Soft (Gray)",
+            filterSepia: "📜 Sepia (Book)", filterDimmed: "🕶️ Dimmed",
             adTitle: "Sponsored Ad", adPlaying: "Ad is playing...", adRewardBtn: "Claim Reward & Close",
-            seoH1: "Why Use a Dark Mode PDF Reader?",
-            seoP1: "Reading long PDF documents on bright white screens can cause severe eye strain, especially at night. Our free online <strong>dark mode PDF converter</strong> inverts the colors of your files, turning glaring white backgrounds into soothing dark colors without modifying the original text.",
-            seoH2: "Best Features of Our PDF Color Inverter",
-            seoP2: "1. <b>100% Privacy & Local Processing:</b> All PDF color inversion is done locally right in your browser. We never upload your sensitive documents to any server.<br>2. <b>Multiple Reading Themes:</b> Choose between Pure Dark, Soft Gray, Dimmed, or Sepia mode based on your room's lighting.<br>3. <b>Batch Convert:</b> Convert multiple PDF files simultaneously to save time.",
             linkPrivacy: "Privacy Policy", linkTerms: "Terms of Service", linkContact: "Contact"
         }
     };
@@ -302,46 +834,45 @@
 
     // Drag & Drop
     fileInput.addEventListener('change', function() { if (this.files.length > 0) handleFiles(this.files); });
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => { dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false); });
+    ['dragenter','dragover','dragleave','drop'].forEach(ev => { dropZone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); }); });
     dropZone.addEventListener('dragover', () => dropZone.classList.add('dragover'));
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-    dropZone.addEventListener('drop', (e) => { dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; handleFiles(e.dataTransfer.files); } });
+    dropZone.addEventListener('drop', (e) => {
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; handleFiles(e.dataTransfer.files); }
+    });
 
     async function handleFiles(files) {
         const t = translations[currentLang];
         dropText.style.display = 'none';
         dropZone.querySelector('i').className = 'fa-solid fa-file-pdf';
         dropZone.querySelector('i').style.color = 'var(--primary)';
-        
         fileInfo.innerText = files.length > 1 ? `${files.length} Files Selected` : files[0].name;
         fileInfo.style.display = 'block';
         filterGrid.style.display = 'grid';
         status.innerText = t.statusGenerating;
-        status.style.color = "#aaa";
-
+        status.style.color = '#888';
         ['dark','soft','sepia','dimmed'].forEach(m => document.getElementById(`loader-${m}`).style.display = 'flex');
-
         await Promise.all([
             generatePreviewForMode(files[0], 'dark', 'canvas-preview-dark', 'loader-dark'),
             generatePreviewForMode(files[0], 'soft', 'canvas-preview-soft', 'loader-soft'),
             generatePreviewForMode(files[0], 'sepia', 'canvas-preview-sepia', 'loader-sepia'),
             generatePreviewForMode(files[0], 'dimmed', 'canvas-preview-dimmed', 'loader-dimmed')
         ]);
-        status.innerText = t.statusReady; status.style.color = "#00f2ff";
+        status.innerText = t.statusReady;
+        status.style.color = 'var(--primary)';
     }
 
     async function startConversionProcess(mode) {
         const t = translations[currentLang];
         const files = fileInput.files;
         status.innerText = `${t.statusProcessing} (${mode.toUpperCase()})`;
-        status.style.color = "var(--gold)";
-
+        status.style.color = 'var(--gold)';
         for (let i = 0; i < files.length; i++) {
             status.innerText = `${t.statusProcessing} (${i+1}/${files.length})`;
-            try { await processSingleFile(files[i], mode, 'save'); } catch (err) { console.error("Hata:", err); }
+            try { await processSingleFile(files[i], mode, 'save'); } catch(err) { console.error(err); }
         }
-
-        status.style.color = "#00e676";
+        status.style.color = '#00e676';
         status.innerText = t.statusComplete;
     }
 
@@ -350,15 +881,13 @@
         const originalPdf = await PDFLib.PDFDocument.load(arrayBuffer);
         const newPdf = await PDFLib.PDFDocument.create();
         const embeddedPages = await newPdf.embedPages(originalPdf.getPages());
-
         for (const embeddedPage of embeddedPages) {
             const { width, height } = embeddedPage.size();
             const newPage = newPdf.addPage([width, height]);
             drawModeLayer(newPage, width, height, mode, embeddedPage);
         }
-
         const pdfBytes = await newPdf.save();
-        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         await saveAndOpenFile(blob, file.name, action, mode);
     }
 
@@ -370,21 +899,18 @@
             const [embeddedPage] = await newPdf.embedPages([pdfDoc.getPages()[0]]);
             const { width, height } = embeddedPage.size();
             const newPage = newPdf.addPage([width, height]);
-
             drawModeLayer(newPage, width, height, mode, embeddedPage);
             const pdfBytes = await newPdf.save();
-            const blob = new Blob([pdfBytes], { type: "application/pdf" });
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
             const previewBuffer = await blob.arrayBuffer();
-
             await renderPageToCanvas(previewBuffer, canvasId);
             document.getElementById(loaderId).style.display = 'none';
-        } catch (err) { console.error(err); }
+        } catch(err) { console.error(err); }
     }
 
     function drawModeLayer(newPage, width, height, mode, embeddedPage) {
         newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(1, 1, 1) });
         newPage.drawPage(embeddedPage, { x: 0, y: 0, width, height });
-
         if (mode === 'dark') {
             newPage.drawRectangle({ x: 0, y: 0, width, height, color: PDFLib.rgb(1, 1, 1), blendMode: PDFLib.BlendMode.Difference });
         } else if (mode === 'soft') {
@@ -398,10 +924,10 @@
     }
 
     async function saveAndOpenFile(blob, originalName, actionType, mode) {
-        const cleanName = originalName.replace(/\.pdf$/i, ''); 
+        const cleanName = originalName.replace(/\.pdf$/i, '');
         const modeSuffix = mode.charAt(0).toUpperCase() + mode.slice(1);
-        const fileName = `Dark_Mode_PDF_${cleanName}_${modeSuffix}.pdf`;
-        const link = document.createElement("a");
+        const fileName = `DarkModePDF_${cleanName}_${modeSuffix}.pdf`;
+        const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = fileName;
         link.click();
@@ -413,38 +939,35 @@
         const page = await pdf.getPage(1);
         const canvas = document.getElementById(canvasId);
         const context = canvas.getContext('2d');
-        const desiredWidth = canvas.parentElement.clientWidth;
-        const scale = (desiredWidth / page.getViewport({ scale: 1.0 }).width);
-        const scaledViewport = page.getViewport({ scale: scale });
-        canvas.height = scaledViewport.height; canvas.width = scaledViewport.width;
+        const desiredWidth = canvas.parentElement.clientWidth - 20;
+        const scale = desiredWidth / page.getViewport({ scale: 1.0 }).width;
+        const scaledViewport = page.getViewport({ scale });
+        canvas.height = scaledViewport.height;
+        canvas.width = scaledViewport.width;
         await page.render({ canvasContext: context, viewport: scaledViewport }).promise;
     }
 
     function onFilterClick(mode) {
-        if (!fileInput.files.length) return;
+        if (!fileInput.files.length) { alert(translations[currentLang].statusSelect); return; }
         if (!isVipActive() && fileInput.files.length > 1) { alert(translations[currentLang].statusVipOnly); return; }
         startConversionProcess(mode);
     }
 
-    // --- VIP REKLAM ---
     let adInterval;
     function handleVipClick() {
-        if (isVipActive()) { alert(currentLang === 'tr' ? "Zaten VIP Modundasınız!" : "Already VIP!"); return; }
-        gosterTamEkranReklam();
+        if (isVipActive()) { alert(currentLang === 'tr' ? 'Zaten VIP modundasınız!' : 'You already have VIP!'); return; }
+        showAdModal();
     }
 
-    function gosterTamEkranReklam() {
+    function showAdModal() {
         const adModal = document.getElementById('rewardAdModal');
         const timerEl = document.getElementById('ad-timer');
         const closeBtn = document.getElementById('btn-close-ad');
-        
         adModal.style.display = 'flex';
         closeBtn.style.display = 'none';
-        
         let timeLeft = 3;
         timerEl.innerText = timeLeft;
         timerEl.style.display = 'block';
-
         adInterval = setInterval(() => {
             timeLeft--;
             timerEl.innerText = timeLeft;
@@ -458,8 +981,7 @@
 
     function closeAdAndReward() {
         document.getElementById('rewardAdModal').style.display = 'none';
-        const now = new Date().getTime();
-        localStorage.setItem('vipExpiry', now + VIP_DURATION);
+        localStorage.setItem('vipExpiry', new Date().getTime() + VIP_DURATION);
         checkVipStatus();
     }
 
@@ -493,20 +1015,14 @@
         document.getElementById('btn-tr').classList.toggle('active', lang === 'tr');
         document.getElementById('btn-en').classList.toggle('active', lang === 'en');
         const t = translations[lang];
-        
         document.getElementById('txt-title').innerText = t.title;
         document.getElementById('txt-subtitle').innerText = t.subtitle;
-        document.getElementById('seo-h1').innerText = t.seoH1;
-        document.getElementById('seo-p1').innerHTML = t.seoP1;
-        document.getElementById('seo-h2').innerText = t.seoH2;
-        document.getElementById('seo-p2').innerHTML = t.seoP2;
         document.getElementById('link-privacy').innerText = t.linkPrivacy;
         document.getElementById('link-terms').innerText = t.linkTerms;
         document.getElementById('link-contact').innerText = t.linkContact;
         document.getElementById('txt-ad-title').innerText = t.adTitle;
         document.getElementById('txt-ad-playing').innerText = t.adPlaying;
         document.getElementById('btn-close-ad').innerText = t.adRewardBtn;
-
         if (document.getElementById('txt-filter-dark')) {
             document.getElementById('txt-filter-dark').innerText = t.filterDark;
             document.getElementById('txt-filter-soft').innerText = t.filterSoft;
@@ -514,6 +1030,14 @@
             document.getElementById('txt-filter-dimmed').innerText = t.filterDimmed;
         }
         checkVipStatus();
+    }
+
+    // FAQ Toggle
+    function toggleFaq(el) {
+        const answer = el.nextElementSibling;
+        const isOpen = answer.classList.contains('open');
+        document.querySelectorAll('.faq-a.open').forEach(a => { a.classList.remove('open'); a.previousElementSibling.classList.remove('open'); });
+        if (!isOpen) { answer.classList.add('open'); el.classList.add('open'); }
     }
 </script>
 </body>
