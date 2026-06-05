@@ -1,4 +1,4 @@
-# PDF Dark Mode 🌙📄
+# Dark Mode PDF & AI Assistanı 🌙📄
 
 https://play.google.com/store/apps/details?id=com.btayg.pdfdarkmode
 
