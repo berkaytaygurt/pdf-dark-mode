@@ -360,7 +360,7 @@ function applyFilter(ctx, w, h, mode){
     }
 }
 
-// ── OPEN READER ───────────────────────────────────
+// ── OPEN READER ────────────────────────
 async function openReader(mode){
     if(!fileInput.files.length){ alert(T[lang].statusSelect); return; }
     document.querySelectorAll('.filter-card').forEach(c=>c.classList.remove('selected'));
