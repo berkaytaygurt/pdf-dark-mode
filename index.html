@@ -11,8 +11,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+    
     <style>
         :root{--primary:#00f2ff;--secondary:#bd00ff;--bg:#0a0a0f;--card-bg:rgba(20,20,28,0.97);--text:#f0f0f0;--text-muted:#888;--gold:#ffd700;--border:rgba(255,255,255,0.08);--font-display:'Syne',sans-serif;--font-body:'Inter',sans-serif;}
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -168,7 +170,6 @@
     </div>
 </div>
 
-<!-- READER OVERLAY -->
 <div id="reader-overlay">
     <div class="reader-header">
         <div class="reader-title" id="reader-filename">document.pdf</div>
@@ -214,7 +215,6 @@
     </div>
 </div>
 
-<!-- AD MODAL -->
 <div id="rewardAdModal" class="modal">
     <div class="modal-content">
         <div class="modal-title" style="color:var(--gold);" id="txt-ad-title">Sponsored Ad</div>
@@ -291,8 +291,9 @@ async function handleFiles(files){
     rawBytes = await files[0].arrayBuffer();
     fileName = files[0].name.replace(/\.pdf$/i,'');
 
-    // Load pdfjs doc once for previews
-    const pdfjsDoc = await pdfjsLib.getDocument(rawBytes.slice(0)).promise;
+    // DÜZELTME: rawBytes.slice(0) yerine Uint8Array kullanıldı
+    const uint8Array = new Uint8Array(rawBytes);
+    const pdfjsDoc = await pdfjsLib.getDocument({ data: uint8Array }).promise;
 
     await Promise.all([
         buildPreview(pdfjsDoc,'dark','canvas-preview-dark','loader-dark'),
@@ -375,8 +376,11 @@ async function openReader(mode){
     updateThemeButtons(mode);
     updateZoomLabel();
 
-    pdfDoc = await pdfjsLib.getDocument(rawBytes.slice(0)).promise;
+    // DÜZELTME: rawBytes.slice(0) yerine Uint8Array kullanıldı
+    const uint8Array = new Uint8Array(rawBytes);
+    pdfDoc = await pdfjsLib.getDocument({ data: uint8Array }).promise;
     totalPages = pdfDoc.numPages;
+    
     document.getElementById('page-total').innerText='/ '+totalPages;
     document.getElementById('page-input').max=totalPages;
 
@@ -482,9 +486,7 @@ function updateThemeButtons(m){
     );
 }
 
-// ── DOWNLOAD (canvas → PNG pages → zip-free: multi-page PDF via canvas) ───
-// We re-render each page to an offscreen canvas at full DPI and package as PDF via jsPDF
-// Fallback: download as individual PNGs if jsPDF not available
+// ── DOWNLOAD ──────────────────────────────────────
 async function downloadAsPDF(){
     const btn  = document.getElementById('btn-download-reader');
     const span = document.getElementById('txt-dl');
@@ -492,7 +494,6 @@ async function downloadAsPDF(){
     btn.disabled=true; span.innerText=t.downloading;
 
     try{
-        // Render each page to full-res canvas and collect blobs
         const HIGH_DPR = 2;
         const canvases = [];
         for(let i=1;i<=totalPages;i++){
@@ -506,13 +507,6 @@ async function downloadAsPDF(){
             canvases.push(c);
         }
 
-        // Build minimal PDF manually (each page = one full-image PDF page)
-        const pdfParts = [];
-        const encodeImg = async (canvas) => {
-            return new Promise(res=>canvas.toBlob(b=>b.arrayBuffer().then(res),'image/jpeg',0.92));
-        };
-
-        // Use jsPDF from CDN for proper multi-page PDF
         if(!window.jsPDF){
             await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
         }
@@ -537,7 +531,6 @@ async function downloadAsPDF(){
 
     }catch(err){
         console.error(err);
-        // Fallback: download first page as PNG
         const page = await pdfDoc.getPage(1);
         const vp = page.getViewport({scale:2, rotation});
         const c  = document.createElement('canvas');
