@@ -49,6 +49,10 @@
         .filter-card:hover,.filter-card:active{transform:translateY(-3px);border-color:var(--primary);box-shadow:0 8px 24px rgba(0,242,255,0.12);}
         .filter-card.selected{border-color:var(--primary);box-shadow:0 0 0 2px rgba(0,242,255,0.3);}
         .filter-card canvas{width:100%;height:auto;border-radius:8px;display:block;}
+        #canvas-preview-dark{filter:invert(1);}
+        #canvas-preview-soft{filter:invert(1) brightness(0.82);}
+        #canvas-preview-sepia{filter:sepia(1);}
+        #canvas-preview-dimmed{filter:brightness(0.48);}
         .filter-name{margin-top:7px;font-size:0.78rem;font-weight:600;color:#ccc;font-family:var(--font-display);}
         .card-loader{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:2;border-radius:14px;}
         .spinner-small{width:22px;height:22px;border:2px solid rgba(255,255,255,0.2);border-radius:50%;border-top-color:var(--primary);animation:spin 0.8s linear infinite;}
@@ -77,14 +81,23 @@
         .btn-download:disabled{opacity:0.5;cursor:not-allowed;transform:none;}
         .btn-close-reader{background:rgba(255,255,255,0.06);border:1px solid var(--border);color:#888;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;touch-action:manipulation;}
         .btn-close-reader:hover{background:rgba(255,50,50,0.15);color:#ff6b6b;border-color:rgba(255,100,100,0.3);}
-        .reader-body{flex:1;overflow-y:auto;overflow-x:auto;display:flex;flex-direction:column;align-items:center;padding:20px 16px 40px;gap:16px;background:#111117;position:relative;}
+        .reader-body{flex:1;overflow:auto;display:block;padding:20px 16px 40px;background:#111117;position:relative;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
         .reader-body::-webkit-scrollbar{width:8px;height:8px;}
         .reader-body::-webkit-scrollbar-track{background:rgba(255,255,255,0.03);}
         .reader-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:4px;}
         .reader-body::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.2);}
-        .page-wrapper-inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;}
-        .page-canvas-wrap{position:relative;background:#1a1a22;border-radius:8px;overflow:hidden;box-shadow:0 4px 30px rgba(0,0,0,0.6);flex-shrink:0;}
-        .page-canvas-wrap canvas{display:block;}
+        .page-wrapper-inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:16px;width:max-content;min-width:100%;}
+        .page-canvas-wrap{position:relative;background:#000;box-shadow:0 2px 12px rgba(0,0,0,0.5);flex-shrink:0;contain:strict;}
+        .pdf-page-canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;}
+        /* Themes are applied with GPU CSS filters: switching theme is instant and costs no re-render */
+        #pages-container[data-theme="dark"]   .pdf-page-canvas{filter:invert(1);}
+        #pages-container[data-theme="soft"]   .pdf-page-canvas{filter:invert(1) brightness(0.82);}
+        #pages-container[data-theme="sepia"]  .pdf-page-canvas{filter:sepia(1);}
+        #pages-container[data-theme="dimmed"] .pdf-page-canvas{filter:brightness(0.48);}
+        #pages-container[data-theme="dark"]   .page-canvas-wrap,
+        #pages-container[data-theme="soft"]   .page-canvas-wrap{background:#000;}
+        #pages-container[data-theme="sepia"]  .page-canvas-wrap{background:#fffff0;}
+        #pages-container[data-theme="dimmed"] .page-canvas-wrap{background:#7a7a7a;}
         .page-num-badge{position:absolute;bottom:8px;right:10px;background:rgba(0,0,0,0.6);color:#555;font-size:0.68rem;font-family:var(--font-display);font-weight:700;padding:2px 7px;border-radius:10px;pointer-events:none;}
         .reader-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:60px 20px;color:#555;}
         .spinner-big{width:48px;height:48px;border:3px solid rgba(255,255,255,0.08);border-radius:50%;border-top-color:var(--primary);animation:spin 0.9s linear infinite;}
@@ -244,7 +257,9 @@ const T = {
 
 let lang = localStorage.getItem('appLanguage') || 'en';
 const VIP_DURATION = 3 * 60 * 60 * 1000;
-const DPR = Math.min(window.devicePixelRatio || 1, 2);
+const MAX_CANVAS_PIXELS = 16777216; // iOS Safari per-canvas limit
+const PDFLIB_URL = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+const JSPDF_URL  = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
 
 // Reader state
 let pdfDoc       = null;
@@ -254,8 +269,17 @@ let zoom         = 1.0;
 let rotation     = 0;
 let currentPage  = 1;
 let totalPages   = 0;
-let rendering    = false;
 let fileName     = 'document';
+
+// Lazy-render state
+let baseSizes    = [];   // [{w,h}] page size at scale 1, rotation 0
+let pages        = [];   // [{wrap, canvas, task, wanted, key, cssW, cssH}]
+let pageTops     = [];
+let layoutGen    = 0;
+let renderQueue  = new Set();
+let activeRenders= 0;
+const MAX_ACTIVE_RENDERS = 2;
+let renderIO = null, releaseIO = null;
 
 const dropZone   = document.getElementById('dropZone');
 const fileInput  = document.getElementById('fileInput');
@@ -263,6 +287,8 @@ const fileInfo   = document.getElementById('fileInfo');
 const dropText   = document.getElementById('dropText');
 const statusEl   = document.getElementById('status');
 const filterGrid = document.getElementById('filter-grid');
+const readerBody = document.getElementById('reader-body');
+const pagesBox   = document.getElementById('pages-container');
 
 setLanguage(lang);
 checkVipStatus();
@@ -288,59 +314,59 @@ async function handleFiles(files){
     statusEl.innerText=t.statusGenerating; statusEl.style.color='#888';
     ['dark','soft','sepia','dimmed'].forEach(m=>document.getElementById(`loader-${m}`).style.display='flex');
 
-    rawBytes = await files[0].arrayBuffer();
-    fileName = files[0].name.replace(/\.pdf$/i,'');
-
-    // DÜZELTME: rawBytes.slice(0) yerine Uint8Array kullanıldı
-    const uint8Array = new Uint8Array(rawBytes);
-    const pdfjsDoc = await pdfjsLib.getDocument({ data: uint8Array }).promise;
-
-    await Promise.all([
-        buildPreview(pdfjsDoc,'dark','canvas-preview-dark','loader-dark'),
-        buildPreview(pdfjsDoc,'soft','canvas-preview-soft','loader-soft'),
-        buildPreview(pdfjsDoc,'sepia','canvas-preview-sepia','loader-sepia'),
-        buildPreview(pdfjsDoc,'dimmed','canvas-preview-dimmed','loader-dimmed'),
-    ]);
-
-    statusEl.innerText=t.statusReady; statusEl.style.color='var(--primary)';
-}
-
-async function buildPreview(pdfjsDoc, mode, canvasId, loaderId){
     try{
-        const page = await pdfjsDoc.getPage(1);
-        const canvas = document.getElementById(canvasId);
-        const ctx = canvas.getContext('2d');
-        const parentW = canvas.parentElement.clientWidth - 20;
-        const vp0 = page.getViewport({scale:1});
-        const scale = parentW / vp0.width;
-        const vp = page.getViewport({scale});
-        canvas.width  = vp.width;
-        canvas.height = vp.height;
-        await page.render({canvasContext:ctx, viewport:vp}).promise;
-        applyFilter(ctx, vp.width, vp.height, mode);
-        document.getElementById(loaderId).style.display='none';
-    }catch(e){console.error(e);}
+        rawBytes = await files[0].arrayBuffer();
+        fileName = files[0].name.replace(/\.pdf$/i,'');
+
+        if(pdfDoc){ try{ pdfDoc.destroy(); }catch(e){} pdfDoc=null; }
+        // Pass a copy so rawBytes stays intact for the download step
+        pdfDoc = await pdfjsLib.getDocument({ data: new Uint8Array(rawBytes.slice(0)) }).promise;
+        totalPages = pdfDoc.numPages;
+        baseSizes = [];
+
+        await buildPreviews();
+        statusEl.innerText=t.statusReady; statusEl.style.color='var(--primary)';
+    }catch(e){
+        console.error(e);
+        statusEl.innerText = lang==='tr' ? 'PDF açılamadı.' : 'Could not open this PDF.';
+        statusEl.style.color='#ff6b6b';
+    }
 }
 
-// ── FILTER ENGINE ─────────────────────────────────
+// Render page 1 once (sharp, at device pixel ratio) and reuse it for all 4 previews.
+// Each preview gets its theme from a CSS filter.
+async function buildPreviews(){
+    const page = await pdfDoc.getPage(1);
+    const first = document.getElementById('canvas-preview-dark');
+    const cssW = Math.max(60, first.parentElement.clientWidth - 20);
+    const vp0 = page.getViewport({scale:1});
+    const ratio = window.devicePixelRatio || 1;
+    const vp = page.getViewport({scale: (cssW / vp0.width) * ratio});
+    const src = document.createElement('canvas');
+    src.width = Math.floor(vp.width); src.height = Math.floor(vp.height);
+    await page.render({canvasContext: src.getContext('2d'), viewport: vp}).promise;
+    ['dark','soft','sepia','dimmed'].forEach(m=>{
+        const c = document.getElementById(`canvas-preview-${m}`);
+        c.width = src.width; c.height = src.height;
+        c.getContext('2d').drawImage(src, 0, 0);
+        document.getElementById(`loader-${m}`).style.display='none';
+    });
+}
+
+// ── PIXEL FILTER (only used by the image fallback when vector export is impossible) ──
 function applyFilter(ctx, w, h, mode){
-    if(mode==='dark'){
+    if(mode==='dark' || mode==='soft'){
         ctx.save();
         ctx.globalCompositeOperation='difference';
         ctx.fillStyle='#ffffff';
         ctx.fillRect(0,0,w,h);
         ctx.restore();
-    } else if(mode==='soft'){
-        ctx.save();
-        ctx.globalCompositeOperation='difference';
-        ctx.fillStyle='#ffffff';
-        ctx.fillRect(0,0,w,h);
-        ctx.restore();
-        ctx.save();
-        ctx.globalCompositeOperation='source-over';
-        ctx.fillStyle='rgba(0,0,0,0.18)';
-        ctx.fillRect(0,0,w,h);
-        ctx.restore();
+        if(mode==='soft'){
+            ctx.save();
+            ctx.fillStyle='rgba(0,0,0,0.18)';
+            ctx.fillRect(0,0,w,h);
+            ctx.restore();
+        }
     } else if(mode==='sepia'){
         const imgData = ctx.getImageData(0,0,w,h);
         const d = imgData.data;
@@ -353,7 +379,6 @@ function applyFilter(ctx, w, h, mode){
         ctx.putImageData(imgData,0,0);
     } else if(mode==='dimmed'){
         ctx.save();
-        ctx.globalCompositeOperation='source-over';
         ctx.fillStyle='rgba(0,0,0,0.52)';
         ctx.fillRect(0,0,w,h);
         ctx.restore();
@@ -362,7 +387,7 @@ function applyFilter(ctx, w, h, mode){
 
 // ── OPEN READER ────────────────────────
 async function openReader(mode){
-    if(!fileInput.files.length){ alert(T[lang].statusSelect); return; }
+    if(!pdfDoc){ alert(T[lang].statusSelect); return; }
     document.querySelectorAll('.filter-card').forEach(c=>c.classList.remove('selected'));
     document.getElementById(`card-${mode}`).classList.add('selected');
 
@@ -372,114 +397,215 @@ async function openReader(mode){
     document.body.style.overflow='hidden';
     document.getElementById('reader-filename').innerText = fileName+'.pdf';
     document.getElementById('reader-loading').style.display='flex';
-    document.getElementById('pages-container').innerHTML='';
+    pagesBox.dataset.theme = mode;
     updateThemeButtons(mode);
     updateZoomLabel();
-
-    // DÜZELTME: rawBytes.slice(0) yerine Uint8Array kullanıldı
-    const uint8Array = new Uint8Array(rawBytes);
-    pdfDoc = await pdfjsLib.getDocument({ data: uint8Array }).promise;
-    totalPages = pdfDoc.numPages;
-    
     document.getElementById('page-total').innerText='/ '+totalPages;
     document.getElementById('page-input').max=totalPages;
+    document.getElementById('page-input').value=1;
 
-    await renderAll();
+    if(baseSizes.length !== totalPages){
+        const all = await Promise.all(Array.from({length: totalPages}, (_,i)=>pdfDoc.getPage(i+1)));
+        baseSizes = all.map(p=>{ const v=p.getViewport({scale:1}); return {w:v.width, h:v.height}; });
+    }
+
+    buildPages();
     document.getElementById('reader-loading').style.display='none';
-    scrollToPage(1);
+    readerBody.scrollTop = 0; readerBody.scrollLeft = 0;
 }
 
-async function renderAll(){
-    const container = document.getElementById('pages-container');
-    container.innerHTML='';
-    const bodyW = document.getElementById('reader-body').clientWidth - 32;
-
-    for(let i=1; i<=totalPages; i++){
-        const page = await pdfDoc.getPage(i);
-        const vpBase = page.getViewport({scale:1, rotation});
-        const scale  = (bodyW / vpBase.width) * zoom;
-        const vp     = page.getViewport({scale, rotation});
-
-        const wrap   = document.createElement('div');
+// Create one lightweight placeholder per page (no canvas yet).
+function buildPages(){
+    teardownPages();
+    const frag = document.createDocumentFragment();
+    for(let i=1;i<=totalPages;i++){
+        const wrap = document.createElement('div');
         wrap.className='page-canvas-wrap';
         wrap.id=`pw-${i}`;
-
-        const canvas = document.createElement('canvas');
-        const ctx    = canvas.getContext('2d');
-        // HiDPI
-        canvas.width  = Math.floor(vp.width  * DPR);
-        canvas.height = Math.floor(vp.height * DPR);
-        canvas.style.width  = Math.floor(vp.width)  + 'px';
-        canvas.style.height = Math.floor(vp.height) + 'px';
-
+        wrap.dataset.page = i;
         const badge = document.createElement('div');
         badge.className='page-num-badge';
         badge.innerText=i;
-        wrap.appendChild(canvas);
         wrap.appendChild(badge);
-        container.appendChild(wrap);
+        frag.appendChild(wrap);
+        pages.push({wrap, canvas:null, task:null, wanted:false, key:-1, cssW:0, cssH:0});
+    }
+    pagesBox.appendChild(frag);
+    applyLayout();
 
-        const scaledVp = page.getViewport({scale: scale*DPR, rotation});
-        await page.render({canvasContext:ctx, viewport:scaledVp}).promise;
-        applyFilter(ctx, canvas.width, canvas.height, readerMode);
+    // Render pages within ~1.5 screens of the viewport; free canvases that are ~4 screens away.
+    renderIO = new IntersectionObserver(entries=>{
+        for(const e of entries){
+            const i = +e.target.dataset.page, s = pages[i-1];
+            if(!s) continue;
+            s.wanted = e.isIntersecting;
+            if(s.wanted){ if(s.key!==layoutGen) queueRender(i); }
+            else { renderQueue.delete(i); if(s.task){ s.task.cancel(); } }
+        }
+    }, {root: readerBody, rootMargin: '150% 50% 150% 50%'});
+    releaseIO = new IntersectionObserver(entries=>{
+        for(const e of entries){
+            if(!e.isIntersecting) releasePage(+e.target.dataset.page);
+        }
+    }, {root: readerBody, rootMargin: '400% 100% 400% 100%'});
+    pages.forEach(s=>{ renderIO.observe(s.wrap); releaseIO.observe(s.wrap); });
+}
+
+function teardownPages(){
+    if(renderIO){ renderIO.disconnect(); renderIO=null; }
+    if(releaseIO){ releaseIO.disconnect(); releaseIO=null; }
+    renderQueue.clear();
+    pages.forEach(s=>{
+        if(s.task) s.task.cancel();
+        if(s.canvas){ s.canvas.width=0; s.canvas.height=0; }
+    });
+    pages=[]; pageTops=[];
+    pagesBox.innerHTML='';
+    layoutGen++;
+}
+
+// Size every placeholder for the current zoom/rotation. Existing canvases are stretched
+// until their sharp re-render is ready, so zooming never shows blank pages.
+function applyLayout(){
+    layoutGen++;
+    const bodyW = readerBody.clientWidth - 32;
+    const swap = rotation % 180 !== 0;
+    pages.forEach((s,idx)=>{
+        const b = baseSizes[idx];
+        const w = swap ? b.h : b.w, h = swap ? b.w : b.h;
+        const scale = (bodyW / w) * zoom;
+        s.cssW = Math.floor(w*scale); s.cssH = Math.floor(h*scale);
+        s.wrap.style.width  = s.cssW+'px';
+        s.wrap.style.height = s.cssH+'px';
+        if(s.task){ s.task.cancel(); }
+    });
+    pageTops = pages.map(s=>s.wrap.offsetTop);
+    renderQueue.clear();
+    pages.forEach((s,idx)=>{ if(s.wanted) queueRender(idx+1); });
+}
+
+function queueRender(i){ renderQueue.add(i); pumpRenders(); }
+
+function pumpRenders(){
+    while(activeRenders < MAX_ACTIVE_RENDERS && renderQueue.size){
+        let best=null, bestD=Infinity;
+        for(const i of renderQueue){ const d=Math.abs(i-currentPage); if(d<bestD){bestD=d; best=i;} }
+        renderQueue.delete(best);
+        activeRenders++;
+        renderPage(best).catch(()=>{}).finally(()=>{ activeRenders--; pumpRenders(); });
     }
 }
 
-async function rerender(){
-    if(rendering||!pdfDoc) return;
-    rendering=true;
-    document.getElementById('reader-loading').style.display='flex';
-    document.getElementById('pages-container').innerHTML='';
-    await renderAll();
-    document.getElementById('reader-loading').style.display='none';
-    rendering=false;
-    scrollToPage(currentPage);
+async function renderPage(i){
+    const s = pages[i-1];
+    if(!s || !s.wanted || s.key===layoutGen) return;
+    const gen = layoutGen;
+    const page = await pdfDoc.getPage(i);
+    if(gen!==layoutGen || !s.wanted) return;
+
+    // Full device resolution (no 2x cap) so text is as sharp as the screen allows
+    const ratio = window.devicePixelRatio || 1;
+    const base = page.getViewport({scale:1, rotation});
+    let scale = (s.cssW / base.width) * ratio;
+    const px = base.width*scale * base.height*scale;
+    if(px > MAX_CANVAS_PIXELS) scale *= Math.sqrt(MAX_CANVAS_PIXELS/px);
+    const vp = page.getViewport({scale, rotation});
+
+    // Render off-screen, then swap in: no flicker, old canvas stays visible meanwhile
+    const c = document.createElement('canvas');
+    c.className = 'pdf-page-canvas';
+    c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
+    const task = page.render({canvasContext: c.getContext('2d', {alpha:false}), viewport: vp});
+    s.task = task;
+    try{ await task.promise; }
+    catch(e){ c.width=0; c.height=0; return; }   // cancelled
+    finally{ if(s.task===task) s.task=null; }
+    if(gen!==layoutGen || !pages[i-1] || pages[i-1]!==s){ c.width=0; c.height=0; return; }
+
+    if(s.canvas){ s.canvas.width=0; s.canvas.height=0; s.canvas.remove(); }
+    s.wrap.insertBefore(c, s.wrap.firstChild);
+    s.canvas = c;
+    s.key = gen;
+}
+
+function releasePage(i){
+    const s = pages[i-1];
+    if(!s) return;
+    renderQueue.delete(i);
+    if(s.task){ s.task.cancel(); s.task=null; }
+    if(s.canvas){ s.canvas.width=0; s.canvas.height=0; s.canvas.remove(); s.canvas=null; }
+    s.key = -1;
+}
+
+// Re-layout (zoom / rotate / resize) keeping the reader anchored on the same spot
+function relayout(dropCanvases){
+    if(!pages.length) return;
+    const idx = Math.max(0, currentPage-1);
+    const top0 = pageTops[idx] || 0, h0 = pages[idx].cssH || 1;
+    const frac = (readerBody.scrollTop - top0) / h0;
+    const xFrac = readerBody.scrollWidth > readerBody.clientWidth
+        ? (readerBody.scrollLeft + readerBody.clientWidth/2) / readerBody.scrollWidth : 0.5;
+    if(dropCanvases) pages.forEach((s,k)=>releasePage(k+1));
+    applyLayout();
+    readerBody.scrollTop = pageTops[idx] + frac * pages[idx].cssH;
+    readerBody.scrollLeft = Math.max(0, xFrac*readerBody.scrollWidth - readerBody.clientWidth/2);
 }
 
 // ── PAGE NAV ──────────────────────────────────────
 function changePage(d){
     const n = currentPage+d;
     if(n<1||n>totalPages) return;
-    currentPage=n;
-    document.getElementById('page-input').value=n;
-    scrollToPage(n);
+    goToPage(n);
 }
 function goToPage(v){
     let n=parseInt(v);
-    if(isNaN(n)) return;
+    if(isNaN(n)||!pages.length) return;
     n=Math.max(1,Math.min(totalPages,n));
+    const far = Math.abs(n-currentPage) > 3;
     currentPage=n;
     document.getElementById('page-input').value=n;
-    scrollToPage(n);
+    scrollToPage(n, far ? 'auto' : 'smooth');
 }
-function scrollToPage(n){
-    const el=document.getElementById(`pw-${n}`);
-    if(el) el.scrollIntoView({behavior:'smooth',block:'start'});
+function scrollToPage(n, behavior){
+    const top = pageTops[n-1];
+    if(top===undefined) return;
+    readerBody.scrollTo({top: Math.max(0, top-16), behavior: behavior||'auto'});
 }
 
-// Track current page on scroll
-document.getElementById('reader-body').addEventListener('scroll',()=>{
-    for(let i=1;i<=totalPages;i++){
-        const el=document.getElementById(`pw-${i}`);
-        if(!el) continue;
-        const r=el.getBoundingClientRect();
-        if(r.top>=0 && r.top<window.innerHeight*0.6){
-            if(currentPage!==i){ currentPage=i; document.getElementById('page-input').value=i; }
-            break;
-        }
-    }
+// Track current page on scroll: rAF-throttled binary search over cached offsets
+// (no getBoundingClientRect loop on every scroll event)
+let scrollTick = false;
+readerBody.addEventListener('scroll',()=>{
+    if(scrollTick) return;
+    scrollTick = true;
+    requestAnimationFrame(()=>{
+        scrollTick = false;
+        if(!pageTops.length) return;
+        const y = readerBody.scrollTop + readerBody.clientHeight*0.4;
+        let lo=0, hi=pageTops.length-1;
+        while(lo<hi){ const mid=(lo+hi+1)>>1; if(pageTops[mid]<=y) lo=mid; else hi=mid-1; }
+        const n = lo+1;
+        if(n!==currentPage){ currentPage=n; document.getElementById('page-input').value=n; }
+    });
+}, {passive:true});
+
+let resizeTimer = null;
+window.addEventListener('resize', ()=>{
+    if(!document.getElementById('reader-overlay').classList.contains('active')) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(()=>relayout(false), 200);
 });
 
 // ── ZOOM ──────────────────────────────────────────
-function changeZoom(d){ zoom=Math.max(0.4,Math.min(3.0,zoom+d)); updateZoomLabel(); rerender(); }
-function resetZoom(){ zoom=1.0; updateZoomLabel(); rerender(); }
+function changeZoom(d){ zoom=Math.max(0.4,Math.min(3.0,zoom+d)); updateZoomLabel(); relayout(false); }
+function resetZoom(){ zoom=1.0; updateZoomLabel(); relayout(false); }
 function updateZoomLabel(){ document.getElementById('zoom-label').innerText=Math.round(zoom*100)+'%'; }
 
 // ── ROTATE ───────────────────────────────────────
-function rotate(d){ rotation=((rotation+d)+360)%360; rerender(); }
+function rotate(d){ rotation=((rotation+d)+360)%360; relayout(true); }
 
-// ── THEME SWITCH ──────────────────────────────────
-function switchTheme(m){ readerMode=m; updateThemeButtons(m); rerender(); }
+// ── THEME SWITCH (instant, CSS only) ──────────────
+function switchTheme(m){ readerMode=m; pagesBox.dataset.theme=m; updateThemeButtons(m); }
 function updateThemeButtons(m){
     ['dark','soft','sepia','dimmed'].forEach(x=>
         document.getElementById(`theme-btn-${x}`).classList.toggle('active-theme',x===m)
@@ -487,64 +613,90 @@ function updateThemeButtons(m){
 }
 
 // ── DOWNLOAD ──────────────────────────────────────
+// The theme is applied INSIDE the PDF (vector), not by turning pages into images:
+// original quality is kept 100%, text stays selectable/searchable, links keep working,
+// and the file stays about the same size as the original.
 async function downloadAsPDF(){
     const btn  = document.getElementById('btn-download-reader');
     const span = document.getElementById('txt-dl');
     const t    = T[lang];
     btn.disabled=true; span.innerText=t.downloading;
+    const modeSuffix = readerMode.charAt(0).toUpperCase()+readerMode.slice(1);
+    const outName = `DarkModePDF_${fileName}_${modeSuffix}.pdf`;
 
     try{
-        const HIGH_DPR = 2;
-        const canvases = [];
-        for(let i=1;i<=totalPages;i++){
-            const page = await pdfDoc.getPage(i);
-            const vp   = page.getViewport({scale:1.5*HIGH_DPR, rotation});
-            const c    = document.createElement('canvas');
-            c.width=vp.width; c.height=vp.height;
-            const ctx=c.getContext('2d');
-            await page.render({canvasContext:ctx,viewport:vp}).promise;
-            applyFilter(ctx,c.width,c.height,readerMode);
-            canvases.push(c);
-        }
-
-        if(!window.jsPDF){
-            await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-        }
-        const { jsPDF } = window.jspdf;
-        const firstC = canvases[0];
-        const pxToMm = 0.264583;
-        const pw = firstC.width  * pxToMm;
-        const ph = firstC.height * pxToMm;
-        const doc = new jsPDF({orientation: ph>pw?'portrait':'landscape', unit:'mm', format:[pw,ph]});
-
-        for(let i=0;i<canvases.length;i++){
-            if(i>0){
-                const cw=canvases[i].width*pxToMm, ch=canvases[i].height*pxToMm;
-                doc.addPage([cw,ch], ch>cw?'portrait':'landscape');
-            }
-            const dataUrl = canvases[i].toDataURL('image/jpeg',0.92);
-            const cw=canvases[i].width*pxToMm, ch=canvases[i].height*pxToMm;
-            doc.addImage(dataUrl,'JPEG',0,0,cw,ch);
-        }
-        const modeSuffix = readerMode.charAt(0).toUpperCase()+readerMode.slice(1);
-        doc.save(`DarkModePDF_${fileName}_${modeSuffix}.pdf`);
-
+        if(!window.PDFLib) await loadScript(PDFLIB_URL);
+        const bytes = await buildThemedPdf(rawBytes, readerMode, rotation);
+        saveBytes(bytes, outName);
     }catch(err){
-        console.error(err);
-        const page = await pdfDoc.getPage(1);
-        const vp = page.getViewport({scale:2, rotation});
-        const c  = document.createElement('canvas');
-        c.width=vp.width; c.height=vp.height;
-        const ctx=c.getContext('2d');
-        await page.render({canvasContext:ctx,viewport:vp}).promise;
-        applyFilter(ctx,c.width,c.height,readerMode);
-        const a=document.createElement('a');
-        a.href=c.toDataURL('image/png');
-        a.download=`DarkModePDF_${fileName}_${readerMode}.png`;
-        a.click();
+        console.warn('Vector export failed, using lossless image fallback', err);
+        try{ await downloadRasterFallback(outName); }
+        catch(e2){ console.error(e2); alert(lang==='tr'?'İndirme başarısız oldu.':'Download failed.'); }
     }
 
     btn.disabled=false; span.innerText=t.download;
+}
+
+async function buildThemedPdf(srcBytes, mode, extraRotation){
+    const { PDFDocument, PDFArray, rgb, BlendMode, degrees } = PDFLib;
+    const doc = await PDFDocument.load(srcBytes, { updateMetadata:false });
+    const ctx = doc.context;
+    // White "paper" painted under the original content, so transparent page
+    // backgrounds invert to black in every PDF viewer
+    const paper = ctx.register(ctx.flateStream('q 1 1 1 rg -100000 -100000 200000 200000 re f Q\n'));
+
+    for(const page of doc.getPages()){
+        const { x, y, width, height } = page.getMediaBox();
+        const box = { x, y, width, height };
+        if(mode==='dark' || mode==='soft'){
+            page.drawRectangle({ ...box, color: rgb(1,1,1), blendMode: BlendMode.Difference });
+            if(mode==='soft') page.drawRectangle({ ...box, color: rgb(0,0,0), opacity: 0.18 });
+        } else if(mode==='sepia'){
+            page.drawRectangle({ ...box, color: rgb(0.26,0.169,0), blendMode: BlendMode.ColorDodge });
+            page.drawRectangle({ ...box, color: rgb(1,1,0.937), blendMode: BlendMode.Multiply });
+        } else if(mode==='dimmed'){
+            page.drawRectangle({ ...box, color: rgb(0,0,0), opacity: 0.52 });
+        }
+        const contents = page.node.Contents();
+        if(!(contents instanceof PDFArray)) throw new Error('Unexpected page content structure');
+        contents.insert(0, paper);
+        if(extraRotation){
+            page.setRotation(degrees((page.getRotation().angle + extraRotation + 360) % 360));
+        }
+    }
+    return doc.save();
+}
+
+// Only for PDFs pdf-lib cannot edit (e.g. encrypted). Lossless PNG pages at high resolution.
+async function downloadRasterFallback(outName){
+    if(!window.jspdf) await loadScript(JSPDF_URL);
+    const { jsPDF } = window.jspdf;
+    let doc = null;
+    for(let i=1;i<=totalPages;i++){
+        const page = await pdfDoc.getPage(i);
+        const vpPt = page.getViewport({scale:1, rotation});
+        const vp   = page.getViewport({scale:3, rotation});      // ~216 DPI
+        const c = document.createElement('canvas');
+        c.width=Math.floor(vp.width); c.height=Math.floor(vp.height);
+        const ctx=c.getContext('2d');
+        await page.render({canvasContext:ctx,viewport:vp}).promise;
+        applyFilter(ctx,c.width,c.height,readerMode);
+        const w = vpPt.width, h = vpPt.height;
+        if(!doc) doc = new jsPDF({orientation: h>w?'portrait':'landscape', unit:'pt', format:[w,h]});
+        else doc.addPage([w,h], h>w?'portrait':'landscape');
+        doc.addImage(c, 'PNG', 0, 0, w, h, undefined, 'FAST');
+        c.width=0; c.height=0;
+    }
+    doc.save(outName);
+}
+
+function saveBytes(bytes, name){
+    const blob = new Blob([bytes], {type:'application/pdf'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 10000);
 }
 
 function loadScript(src){
@@ -558,6 +710,7 @@ function loadScript(src){
 function closeReader(){
     document.getElementById('reader-overlay').classList.remove('active');
     document.body.style.overflow='';
+    teardownPages();   // free page canvases (memory)
 }
 
 // ── KEYBOARD ──────────────────────────────────────
